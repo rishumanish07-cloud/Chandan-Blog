@@ -16,7 +16,7 @@ export default function LoginPage() {
     }
   }, [user, loading, router]);
 
-  if (loading) {
+  if (loading || user) {
     return (
        <div className="flex min-h-screen items-center justify-center">
         <div className="w-full max-w-md space-y-4">
@@ -26,11 +26,6 @@ export default function LoginPage() {
         </div>
        </div>
     );
-  }
-  
-  // Don't show AuthForm if user is already logged in and redirecting
-  if (user) {
-    return null;
   }
 
   return <AuthForm type="login" />;
