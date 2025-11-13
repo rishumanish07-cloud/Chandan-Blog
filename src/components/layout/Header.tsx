@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { BookMarked, LogOut, PlusCircle, User as UserIcon } from "lucide-react";
+import { BookMarked, LogOut, PlusCircle, User as UserIcon, Settings } from "lucide-react";
 import { useAuth } from "@/lib/auth/hooks";
 import { signOutWithGoogle } from "@/lib/actions/auth";
 import { Button } from "@/components/ui/button";
@@ -62,6 +62,13 @@ export function Header() {
                         <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
                       </div>
                     </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link href="/profile">
+                        <Settings className="mr-2 h-4 w-4" />
+                        <span>Profile</span>
+                      </Link>
+                    </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={handleSignOut}>
                       <LogOut className="mr-2 h-4 w-4" />

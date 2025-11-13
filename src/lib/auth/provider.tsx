@@ -2,7 +2,8 @@
 
 import { createContext, useEffect, useState, ReactNode, Suspense } from "react";
 import { onAuthStateChanged, User } from "firebase/auth";
-import { auth } from "@/lib/firebase/config";
+import { doc, onSnapshot } from "firebase/firestore";
+import { auth, db } from "@/lib/firebase/config";
 import type { UserProfile } from "@/lib/types";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "./hooks";
@@ -18,7 +19,7 @@ export const AuthContext = createContext<AuthContextType>({
 });
 
 const publicRoutes = ["/login", "/signup"];
-const protectedRoutes = ["/home", "/posts/new"];
+const protectedRoutes = ["/home", "/posts/new", "/profile"];
 
 function AuthRedirector({ children }: { children: ReactNode }) {
     const { user, loading } = useAuth();
@@ -48,18 +49,27 @@ function AuthRedirector({ children }: { children: ReactNode }) {
     const [loading, setLoading] = useState(true);
   
     useEffect(() => {
-      const unsubscribe = onAuthStateChanged(auth, (firebaseUser: User | null) => {
+      const unsubscribeAuth = onAuthStateChanged(auth, (firebaseUser: User | null) => {
         if (firebaseUser) {
-          const { uid, email, displayName, photoURL } = firebaseUser;
-          const userProfile = { uid, email, displayName, photoURL };
-          setUser(userProfile);
+          const userRef = doc(db, 'users', firebaseUser.uid);
+          const unsubscribeSnapshot = onSnapshot(userRef, (doc) => {
+            if (doc.exists()) {
+              setUser(doc.data() as UserProfile);
+            } else {
+              // Fallback to auth data if firestore doc doesn't exist yet
+              const { uid, email, displayName, photoURL } = firebaseUser;
+              setUser({ uid, email, displayName, photoURL });
+            }
+            setLoading(false);
+          });
+          return () => unsubscribeSnapshot();
         } else {
           setUser(null);
+          setLoading(false);
         }
-        setLoading(false);
       });
   
-      return () => unsubscribe();
+      return () => unsubscribeAuth();
     }, []);
   
     return (
