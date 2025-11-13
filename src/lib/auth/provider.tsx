@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useEffect, useState, ReactNode } from "react";
+import { createContext, useEffect, useState, ReactNode, Suspense } from "react";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { auth } from "@/lib/firebase/config";
 import type { UserProfile } from "@/lib/types";
@@ -19,55 +19,80 @@ export const AuthContext = createContext<AuthContextType>({
 const publicRoutes = ["/login", "/signup"];
 const protectedRoutes = ["/home", "/posts/new"];
 
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState(true);
-  const router = useRouter();
-  const pathname = usePathname();
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser: User | null) => {
-      if (firebaseUser) {
-        const { uid, email, displayName, photoURL } = firebaseUser;
-        const userProfile = { uid, email, displayName, photoURL };
-        setUser(userProfile);
-      } else {
-        setUser(null);
+function AuthRedirect({ children }: { children: ReactNode }) {
+    const { user, loading } = useAuth();
+    const router = useRouter();
+    const pathname = usePathname();
+  
+    useEffect(() => {
+      if (loading) return;
+  
+      const pathIsProtected = protectedRoutes.some(p => pathname.startsWith(p));
+      const pathIsPublic = publicRoutes.includes(pathname);
+  
+      if (!user && pathIsProtected) {
+        router.push('/login');
       }
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, []);
-
-  useEffect(() => {
-    if (loading) return;
-
-    const pathIsProtected = protectedRoutes.some(p => pathname.startsWith(p));
-    const pathIsPublic = publicRoutes.includes(pathname);
-
-    if (!user && pathIsProtected) {
-      router.push('/login');
-    }
-
-    if (user && pathIsPublic) {
-      router.push('/home');
-    }
-  }, [loading, user, pathname, router]);
-
-  // While auth state is loading and we are on a protected or public route that might redirect,
-  // we show a loader to avoid flashing content.
-  if (loading && (protectedRoutes.some(p => pathname.startsWith(p)) || publicRoutes.includes(pathname))) {
-      return (
+  
+      if (user && pathIsPublic) {
+        router.push('/home');
+      }
+    }, [loading, user, pathname, router]);
+  
+    if (loading) {
+      const pathIsProtected = protectedRoutes.some(p => pathname.startsWith(p));
+      const pathIsPublic = publicRoutes.includes(pathname);
+      if (pathIsProtected || pathIsPublic) {
+        return (
           <div className="flex items-center justify-center h-screen">
               <div className="loader ease-linear rounded-full border-8 border-t-8 border-gray-200 h-32 w-32 animate-spin"></div>
           </div>
-      );
+        );
+      }
+    }
+  
+    return <>{children}</>;
+  }
+  
+  export function AuthProvider({ children }: { children: ReactNode }) {
+    const [user, setUser] = useState<UserProfile | null>(null);
+    const [loading, setLoading] = useState(true);
+  
+    useEffect(() => {
+      const unsubscribe = onAuthStateChanged(auth, (firebaseUser: User | null) => {
+        if (firebaseUser) {
+          const { uid, email, displayName, photoURL } = firebaseUser;
+          const userProfile = { uid, email, displayName, photoURL };
+          setUser(userProfile);
+        } else {
+          setUser(null);
+        }
+        setLoading(false);
+      });
+  
+      return () => unsubscribe();
+    }, []);
+  
+    return (
+      <AuthContext.Provider value={{ user, loading }}>
+        <Suspense fallback={
+            <div className="flex items-center justify-center h-screen">
+                <div className="loader ease-linear rounded-full border-8 border-t-8 border-gray-200 h-32 w-32 animate-spin"></div>
+            </div>
+        }>
+            <AuthRedirect>{children}</AuthRedirect>
+        </Suspense>
+      </AuthContext.Provider>
+    );
   }
 
-  return (
-    <AuthContext.Provider value={{ user, loading }}>
-      {children}
-    </AuthContext.Provider>
-  );
-}
+  // Hook to use auth context
+import { useContext } from "react";
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error("useAuth must be used within an AuthProvider");
+  }
+  return context;
+};
