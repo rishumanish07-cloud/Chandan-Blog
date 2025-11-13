@@ -88,8 +88,11 @@ export async function toggleLike(postId: string, userId: string) {
     }
 
     const postData = postSnap.data();
-    const isLiked = postData.likes.includes(userId);
-    const isDisliked = postData.dislikes.includes(userId);
+    const likes = postData.likes || [];
+    const dislikes = postData.dislikes || [];
+    
+    const isLiked = likes.includes(userId);
+    const isDisliked = dislikes.includes(userId);
 
     if (isLiked) {
         await updateDoc(postRef, {
@@ -121,8 +124,11 @@ export async function toggleDislike(postId: string, userId: string) {
     }
 
     const postData = postSnap.data();
-    const isDisliked = postData.dislikes.includes(userId);
-    const isLiked = postData.likes.includes(userId);
+    const likes = postData.likes || [];
+    const dislikes = postData.dislikes || [];
+
+    const isDisliked = dislikes.includes(userId);
+    const isLiked = likes.includes(userId);
 
     if (isDisliked) {
         await updateDoc(postRef, {
