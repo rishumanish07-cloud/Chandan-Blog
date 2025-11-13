@@ -15,6 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "../ui/skeleton";
+import { ModeToggle } from "./ModeToggle";
 
 export function Header() {
   const { user, loading } = useAuth();
@@ -32,6 +33,7 @@ export function Header() {
         </Link>
         <div className="flex flex-1 items-center justify-end space-x-4">
           <nav className="flex items-center space-x-2">
+            <ModeToggle />
             {loading ? (
               <Skeleton className="h-10 w-24 rounded-md" />
             ) : user ? (
