@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -30,6 +31,7 @@ type AuthFormProps = {
 
 export function AuthForm({ type }: AuthFormProps) {
   const { toast } = useToast();
+  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
@@ -43,8 +45,18 @@ export function AuthForm({ type }: AuthFormProps) {
     try {
       if (type === "login") {
         await signInWithCredentials(values);
+        toast({
+          title: "Success",
+          description: "Logged in successfully!",
+        });
+        router.push("/home");
       } else {
         await signUpWithCredentials(values);
+        toast({
+          title: "Success",
+          description: "Account created successfully!",
+        });
+        router.push("/home");
       }
     } catch (error: any) {
       toast({
@@ -61,6 +73,11 @@ export function AuthForm({ type }: AuthFormProps) {
     setIsGoogleLoading(true);
     try {
         await signInWithGoogle();
+        toast({
+          title: "Success",
+          description: "Logged in successfully!",
+        });
+        router.push("/home");
     } catch (error: any) {
         toast({
             variant: "destructive",

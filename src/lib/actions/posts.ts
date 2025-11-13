@@ -12,9 +12,10 @@ import {
   arrayRemove,
   getDoc
 } from "firebase/firestore";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { db, storage } from "@/lib/firebase/config";
+import { db } from "@/lib/firebase/config";
 import type { UserProfile } from "@/lib/types";
+import { writeFile, mkdir } from "fs/promises";
+import { join } from "path";
 
 export async function createPost(user: UserProfile, formData: FormData) {
   const title = formData.get("title") as string;
@@ -31,9 +32,28 @@ export async function createPost(user: UserProfile, formData: FormData) {
 
   let imageUrl = "";
   if (imageFile && imageFile.size > 0) {
-    const storageRef = ref(storage, `posts/${Date.now()}_${imageFile.name}`);
-    await uploadBytes(storageRef, imageFile);
-    imageUrl = await getDownloadURL(storageRef);
+    try {
+      // Create uploads directory if it doesn't exist
+      const uploadsDir = join(process.cwd(), "public", "uploads", "posts");
+      await mkdir(uploadsDir, { recursive: true });
+
+      // Generate unique filename
+      const timestamp = Date.now();
+      const sanitizedName = imageFile.name.replace(/[^a-zA-Z0-9.-]/g, "_");
+      const filename = `${timestamp}_${sanitizedName}`;
+      const filepath = join(uploadsDir, filename);
+
+      // Convert File to Buffer and save
+      const bytes = await imageFile.arrayBuffer();
+      const buffer = Buffer.from(bytes);
+      await writeFile(filepath, buffer);
+
+      // Store relative path for Firestore (starts with /uploads/...)
+      imageUrl = `/uploads/posts/${filename}`;
+    } catch (error) {
+      console.error("Error saving image:", error);
+      throw new Error("Failed to save image. Please try again.");
+    }
   }
 
   const postData = {
