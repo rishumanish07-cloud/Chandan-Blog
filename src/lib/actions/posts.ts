@@ -1,3 +1,4 @@
+
 "use server";
 
 import { revalidatePath } from "next/cache";
@@ -61,7 +62,7 @@ export async function createPost(user: UserProfile, formData: FormData) {
     content,
     imageUrl,
     authorId: user.uid,
-    authorName: user.displayName || "Anonymous",
+    authorName: user.displayName || user.email || "Anonymous",
     authorPhotoURL: user.photoURL || "",
     createdAt: Timestamp.now(),
     likes: [],
@@ -114,7 +115,7 @@ export async function addComment(postId: string, user: UserProfile, commentText:
     const commentData = {
       text: commentText,
       authorId: user.uid,
-      authorName: user.displayName || "Anonymous",
+      authorName: user.displayName || user.email || "Anonymous",
       authorPhotoURL: user.photoURL || "",
       createdAt: Timestamp.now(),
       postId: postId
