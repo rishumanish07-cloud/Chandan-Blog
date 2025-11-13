@@ -1,8 +1,7 @@
 "use server";
 
-import { updateProfile } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
-import { auth, db } from "@/lib/firebase/config";
+import { db } from "@/lib/firebase/config";
 import type { UserProfile } from "../types";
 import { writeFile, mkdir } from "fs/promises";
 import { join } from "path";
@@ -38,16 +37,6 @@ export async function updateUserProfile(user: UserProfile, formData: FormData) {
         console.error("Error saving profile image:", error);
         throw new Error("Failed to save profile image.");
       }
-    }
-  
-    // Update Firebase Auth profile
-    if (auth.currentUser) {
-      await updateProfile(auth.currentUser, {
-        displayName,
-        photoURL,
-      });
-    } else {
-        throw new Error("No authenticated user found.")
     }
   
     // Update Firestore user document
