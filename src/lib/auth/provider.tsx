@@ -5,6 +5,7 @@ import { onAuthStateChanged, User } from "firebase/auth";
 import { auth } from "@/lib/firebase/config";
 import type { UserProfile } from "@/lib/types";
 import { usePathname, useRouter } from "next/navigation";
+import { useAuth } from "./hooks";
 
 interface AuthContextType {
   user: UserProfile | null;
