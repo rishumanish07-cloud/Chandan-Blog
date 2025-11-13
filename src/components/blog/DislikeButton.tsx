@@ -14,7 +14,7 @@ type DislikeButtonProps = {
   likes: string[]; 
 };
 
-export function DislikeButton({ postId, dislikes, likes }: DislikeButtonProps) {
+export function DislikeButton({ postId, dislikes = [], likes }: DislikeButtonProps) {
   const { user } = useAuth();
   const { toast } = useToast();
   
