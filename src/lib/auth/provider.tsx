@@ -17,6 +17,7 @@ export const AuthContext = createContext<AuthContextType>({
 });
 
 const publicRoutes = ["/login", "/signup"];
+const protectedRoutes = ["/home", "/posts/new"];
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserProfile | null>(null);
@@ -30,33 +31,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const { uid, email, displayName, photoURL } = firebaseUser;
         const userProfile = { uid, email, displayName, photoURL };
         setUser(userProfile);
-        
-        if (publicRoutes.includes(pathname)) {
-          router.push("/home");
-        }
       } else {
         setUser(null);
-        if (!publicRoutes.includes(pathname) && !['/'].includes(pathname) && !pathname.startsWith('/posts/')) {
-            router.push("/login");
-        }
       }
       setLoading(false);
     });
 
     return () => unsubscribe();
-  }, [router, pathname]);
+  }, []);
+
+  useEffect(() => {
+    if (!loading) {
+      const isPublicRoute = publicRoutes.includes(pathname);
+      const isProtectedRoute = protectedRoutes.some(p => pathname.startsWith(p));
+
+      if (user && isPublicRoute) {
+        router.push("/home");
+      } else if (!user && isProtectedRoute) {
+        router.push("/login");
+      }
+    }
+  }, [user, loading, pathname, router]);
   
   if (loading) {
     return (
         <div className="flex items-center justify-center h-screen">
-            <div className="loader ease-linear rounded-full border-8 border-t-8 border-gray-200 h-32 w-32"></div>
+            <div className="loader ease-linear rounded-full border-8 border-t-8 border-gray-200 h-32 w-32 animate-spin"></div>
         </div>
     );
   }
 
-
   return (
-    <AuthContext.Provider value={{ user, loading: false }}>
+    <AuthContext.Provider value={{ user, loading }}>
       {children}
     </AuthContext.Provider>
   );

@@ -3,17 +3,20 @@
 import { useAuth } from "@/lib/auth/hooks";
 import { AuthForm } from "@/components/auth/AuthForm";
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 export default function SignUpPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
 
-  if (loading) {
-    return null;
-  }
+  useEffect(() => {
+    if (!loading && user) {
+      router.push('/home');
+    }
+  }, [user, loading, router]);
 
-  if (user) {
-    router.push('/home');
+  if (loading || user) {
+    // Render nothing while loading or if user is already logged in (and redirecting)
     return null;
   }
 
