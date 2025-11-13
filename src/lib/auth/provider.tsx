@@ -32,7 +32,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(userProfile);
         
         if (publicRoutes.includes(pathname)) {
-          router.push("/");
+          router.push("/home");
         }
       } else {
         setUser(null);

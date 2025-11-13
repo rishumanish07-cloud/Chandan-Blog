@@ -2,11 +2,18 @@
 
 import { useAuth } from "@/lib/auth/hooks";
 import { AuthForm } from "@/components/auth/AuthForm";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
   const { user, loading } = useAuth();
+  const router = useRouter();
 
-  if (loading || user) {
+  if (loading) {
+    return null;
+  }
+  
+  if(user){
+    router.push('/home')
     return null;
   }
 
