@@ -1,8 +1,6 @@
-
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { 
   addDoc, 
   collection, 
@@ -15,6 +13,7 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase/config";
 import type { UserProfile } from "@/lib/types";
+import { redirect } from "next/navigation";
 import { writeFile, mkdir } from "fs/promises";
 import { join } from "path";
 
