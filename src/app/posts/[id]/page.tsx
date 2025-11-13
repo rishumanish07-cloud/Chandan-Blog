@@ -90,7 +90,7 @@ export default function PostPage() {
     return <div className="text-center py-20">Post not found.</div>;
   }
 
-  const postDate = post.createdAt ? format(post.createdAt.toDate(), "MMMM d, yyyy") : "";
+  const postDate = post.createdAt ? format(post.createdAt.toDate(), "MMMM d, yyyy 'at' h:mm a") : "";
 
   return (
     <article className="container mx-auto max-w-4xl py-8 sm:py-12 px-4">

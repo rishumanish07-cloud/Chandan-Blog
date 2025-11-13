@@ -11,7 +11,7 @@ type PostCardProps = {
 };
 
 export function PostCard({ post }: PostCardProps) {
-  const postDate = post.createdAt ? format(post.createdAt.toDate(), "MMM d, yyyy") : "No date";
+  const postDate = post.createdAt ? format(post.createdAt.toDate(), "MMM d, yyyy, h:mm a") : "No date";
 
   return (
     <Card className="flex flex-col overflow-hidden transition-transform duration-300 ease-in-out hover:-translate-y-1 hover:shadow-xl">
