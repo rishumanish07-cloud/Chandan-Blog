@@ -17,6 +17,7 @@ export interface Post {
   authorPhotoURL: string;
   createdAt: Timestamp;
   likes: string[];
+  dislikes: string[];
 }
 
 export interface Comment {

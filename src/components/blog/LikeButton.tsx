@@ -11,9 +11,10 @@ import { cn } from "@/lib/utils";
 type LikeButtonProps = {
   postId: string;
   likes: string[];
+  dislikes: string[];
 };
 
-export function LikeButton({ postId, likes }: LikeButtonProps) {
+export function LikeButton({ postId, likes, dislikes }: LikeButtonProps) {
   const { user } = useAuth();
   const { toast } = useToast();
   
@@ -39,7 +40,6 @@ export function LikeButton({ postId, likes }: LikeButtonProps) {
       return;
     }
 
-    // Optimistic update
     const newIsLiked = !isLiked;
     setIsLiked(newIsLiked);
     setLikeCount(prev => newIsLiked ? prev + 1 : prev - 1);
@@ -47,7 +47,6 @@ export function LikeButton({ postId, likes }: LikeButtonProps) {
     try {
       await toggleLike(postId, user.uid);
     } catch (error) {
-      // Revert optimistic update on error
       setIsLiked(!newIsLiked);
       setLikeCount(prev => newIsLiked ? prev - 1 : prev + 1);
       toast({

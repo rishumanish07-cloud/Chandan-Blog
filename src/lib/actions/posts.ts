@@ -66,6 +66,7 @@ export async function createPost(user: UserProfile, formData: FormData) {
     authorPhotoURL: user.photoURL || "",
     createdAt: Timestamp.now(),
     likes: [],
+    dislikes: [],
   };
 
   const docRef = await addDoc(collection(db, "posts"), postData);
@@ -88,15 +89,53 @@ export async function toggleLike(postId: string, userId: string) {
 
     const postData = postSnap.data();
     const isLiked = postData.likes.includes(userId);
+    const isDisliked = postData.dislikes.includes(userId);
 
     if (isLiked) {
         await updateDoc(postRef, {
             likes: arrayRemove(userId),
         });
     } else {
-        await updateDoc(postRef, {
+        const updates: any = {
             likes: arrayUnion(userId),
+        };
+        if (isDisliked) {
+            updates.dislikes = arrayRemove(userId);
+        }
+        await updateDoc(postRef, updates);
+    }
+
+    revalidatePath(`/posts/${postId}`);
+    revalidatePath(`/`);
+}
+
+export async function toggleDislike(postId: string, userId: string) {
+    if (!userId) {
+        throw new Error("User not authenticated");
+    }
+    const postRef = doc(db, "posts", postId);
+    const postSnap = await getDoc(postRef);
+
+    if (!postSnap.exists()) {
+        throw new Error("Post not found");
+    }
+
+    const postData = postSnap.data();
+    const isDisliked = postData.dislikes.includes(userId);
+    const isLiked = postData.likes.includes(userId);
+
+    if (isDisliked) {
+        await updateDoc(postRef, {
+            dislikes: arrayRemove(userId),
         });
+    } else {
+        const updates: any = {
+            dislikes: arrayUnion(userId),
+        };
+        if (isLiked) {
+            updates.likes = arrayRemove(userId);
+        }
+        await updateDoc(postRef, updates);
     }
 
     revalidatePath(`/posts/${postId}`);

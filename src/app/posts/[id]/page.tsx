@@ -14,6 +14,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { User, Sparkles, Loader2 } from "lucide-react";
 import { LikeButton } from "@/components/blog/LikeButton";
+import { DislikeButton } from "@/components/blog/DislikeButton";
 import { CommentSection } from "@/components/blog/CommentSection";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -128,7 +129,10 @@ export default function PostPage() {
       <div className="prose prose-lg dark:prose-invert max-w-none mb-8" dangerouslySetInnerHTML={{ __html: post.content.replace(/\n/g, '<br />') }} />
       
       <div className="flex items-center justify-between border-t border-b py-4 my-8">
-        <LikeButton postId={post.id} likes={post.likes} />
+        <div className="flex items-center gap-2">
+            <LikeButton postId={post.id} likes={post.likes} dislikes={post.dislikes} />
+            <DislikeButton postId={post.id} dislikes={post.dislikes} likes={post.likes} />
+        </div>
         <Button variant="outline" onClick={handleSummarize} disabled={isSummarizing}>
             {isSummarizing ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

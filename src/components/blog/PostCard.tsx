@@ -4,7 +4,7 @@ import { format } from "date-fns";
 import type { Post } from "@/lib/types";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Heart, User } from "lucide-react";
+import { Heart, ThumbsDown, User } from "lucide-react";
 
 type PostCardProps = {
   post: Post;
@@ -54,9 +54,15 @@ export function PostCard({ post }: PostCardProps) {
             <p className="text-xs text-muted-foreground">{postDate}</p>
           </div>
         </div>
-        <div className="flex items-center gap-1 text-muted-foreground">
-          <Heart className="h-4 w-4" />
-          <span className="text-sm">{post.likes.length}</span>
+        <div className="flex items-center gap-4 text-muted-foreground">
+            <div className="flex items-center gap-1">
+                <Heart className="h-4 w-4" />
+                <span className="text-sm">{post.likes.length}</span>
+            </div>
+            <div className="flex items-center gap-1">
+                <ThumbsDown className="h-4 w-4" />
+                <span className="text-sm">{post.dislikes?.length || 0}</span>
+            </div>
         </div>
       </CardFooter>
     </Card>
