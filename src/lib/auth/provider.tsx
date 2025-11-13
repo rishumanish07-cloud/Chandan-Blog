@@ -41,24 +41,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (!loading) {
-      const isPublicRoute = publicRoutes.includes(pathname);
-      const isProtectedRoute = protectedRoutes.some(p => pathname.startsWith(p));
+    if (loading) return;
 
-      if (user && isPublicRoute) {
-        router.push("/home");
-      } else if (!user && isProtectedRoute) {
-        router.push("/login");
-      }
+    const pathIsProtected = protectedRoutes.some(p => pathname.startsWith(p));
+    const pathIsPublic = publicRoutes.includes(pathname);
+
+    if (!user && pathIsProtected) {
+      router.push('/login');
     }
-  }, [user, loading, pathname, router]);
-  
-  if (loading) {
-    return (
-        <div className="flex items-center justify-center h-screen">
-            <div className="loader ease-linear rounded-full border-8 border-t-8 border-gray-200 h-32 w-32 animate-spin"></div>
-        </div>
-    );
+
+    if (user && pathIsPublic) {
+      router.push('/home');
+    }
+  }, [loading, user, pathname, router]);
+
+  // While auth state is loading and we are on a protected or public route that might redirect,
+  // we show a loader to avoid flashing content.
+  if (loading && (protectedRoutes.some(p => pathname.startsWith(p)) || publicRoutes.includes(pathname))) {
+      return (
+          <div className="flex items-center justify-center h-screen">
+              <div className="loader ease-linear rounded-full border-8 border-t-8 border-gray-200 h-32 w-32 animate-spin"></div>
+          </div>
+      );
   }
 
   return (
