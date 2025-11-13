@@ -16,7 +16,7 @@ export default function NewPostPage() {
     }
   }, [user, loading, router]);
 
-  if (loading || !user) {
+  if (loading) {
     return (
       <div className="container mx-auto max-w-3xl py-12">
         <div className="space-y-8">
@@ -28,6 +28,10 @@ export default function NewPostPage() {
         </div>
       </div>
     );
+  }
+
+  if (!user) {
+    return null;
   }
 
   return <PostForm />;
