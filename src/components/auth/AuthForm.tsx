@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { Loader2 } from "lucide-react";
+import { Loader2, BookMarked } from "lucide-react";
 
 const GoogleIcon = () => (
     <svg className="mr-2 h-4 w-4" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 488 512">
