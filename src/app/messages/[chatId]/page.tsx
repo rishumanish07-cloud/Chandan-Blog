@@ -16,6 +16,7 @@ import {
 } from "firebase/firestore";
 import { sendMessage } from "@/lib/actions/messages";
 import type { Message, Chat } from "@/lib/types";
+import { formatDistanceToNow } from "date-fns";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -118,32 +119,32 @@ export default function ChatPage() {
           <div
             key={message.id}
             className={cn(
-              "flex items-end gap-2",
-              message.senderId === user?.uid ? "justify-end" : "justify-start"
+              "flex flex-col gap-1",
+              message.senderId === user?.uid ? "items-end" : "items-start"
             )}
           >
-            {message.senderId !== user?.uid && (
-                <Avatar className="h-8 w-8">
-                    <AvatarImage src={message.senderPhotoURL} />
-                    <AvatarFallback>{message.senderName.charAt(0)}</AvatarFallback>
-                </Avatar>
-            )}
-            <div
-              className={cn(
-                "max-w-xs md:max-w-md rounded-lg px-4 py-2",
-                message.senderId === user?.uid
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted"
-              )}
-            >
-              <p>{message.text}</p>
+            <div className={cn(
+              "flex items-end gap-2",
+               message.senderId === user?.uid ? "flex-row-reverse" : "flex-row"
+            )}>
+              <Avatar className="h-8 w-8">
+                  <AvatarImage src={message.senderPhotoURL} />
+                  <AvatarFallback>{message.senderName.charAt(0)}</AvatarFallback>
+              </Avatar>
+              <div
+                className={cn(
+                  "max-w-xs md:max-w-md rounded-lg px-4 py-2",
+                  message.senderId === user?.uid
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted"
+                )}
+              >
+                <p>{message.text}</p>
+              </div>
             </div>
-             {message.senderId === user?.uid && (
-                <Avatar className="h-8 w-8">
-                    <AvatarImage src={user?.photoURL ?? ''} />
-                    <AvatarFallback>{user?.displayName?.charAt(0) ?? 'U'}</AvatarFallback>
-                </Avatar>
-            )}
+            <p className={cn("text-xs text-muted-foreground", message.senderId === user?.uid ? 'pr-10' : 'pl-10')}>
+              {message.createdAt ? formatDistanceToNow(message.createdAt.toDate(), { addSuffix: true }) : ''}
+            </p>
           </div>
         ))}
         <div ref={messagesEndRef} />
