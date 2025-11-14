@@ -17,12 +17,13 @@ import {
 import { sendMessage, clearChatHistory } from "@/lib/actions/messages";
 import type { Message, Chat } from "@/lib/types";
 import { formatDistanceToNow } from "date-fns";
+import EmojiPicker, { EmojiClickData } from 'emoji-picker-react';
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Loader2, Send, MoreVertical, Trash2 } from "lucide-react";
+import { ArrowLeft, Loader2, Send, MoreVertical, Trash2, Smile } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import {
@@ -41,12 +42,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { useTheme } from "next-themes";
+
 
 export default function ChatPage() {
   const { chatId } = useParams();
   const { user } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
+  const { theme } = useTheme();
 
   const [chat, setChat] = useState<Chat | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -126,6 +131,11 @@ export default function ChatPage() {
     }
   };
 
+  const onEmojiClick = (emojiData: EmojiClickData) => {
+    setNewMessage(prevMessage => prevMessage + emojiData.emoji);
+  };
+
+
   if (loading) {
     return <div className="flex flex-col h-full"><Skeleton className="h-full w-full" /></div>;
   }
@@ -186,7 +196,7 @@ export default function ChatPage() {
                     : "bg-muted"
                 )}
               >
-                <p>{message.text}</p>
+                <p className="break-words">{message.text}</p>
               </div>
             </div>
             <p className={cn("text-xs text-muted-foreground", message.senderId === user?.uid ? 'pr-10' : 'pl-10')}>
@@ -199,6 +209,16 @@ export default function ChatPage() {
 
       <footer className="p-4 border-t">
         <form onSubmit={handleSendMessage} className="flex items-center gap-2">
+            <Popover>
+                <PopoverTrigger asChild>
+                    <Button variant="ghost" size="icon" type="button">
+                        <Smile className="h-5 w-5" />
+                    </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0 border-0">
+                    <EmojiPicker onEmojiClick={onEmojiClick} theme={theme === 'dark' ? 'dark' : 'light'} />
+                </PopoverContent>
+            </Popover>
           <Input
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
