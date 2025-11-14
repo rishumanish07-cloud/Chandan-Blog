@@ -71,17 +71,23 @@ export function NotificationBell() {
     if (!user) return;
 
     setLoading(true);
+    // Note: The orderBy was removed to prevent an issue where a composite index is required.
+    // This fixes the infinite loading bug if the index isn't created in Firestore.
+    // Notifications will be roughly ordered but not guaranteed.
     const q = query(
       collection(db, "notifications"),
-      where("recipientId", "==", user.uid),
-      orderBy("createdAt", "desc")
+      where("recipientId", "==", user.uid)
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const notifs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Notification));
+      const notifs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Notification))
+        .sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis()); // Sort client-side
       setNotifications(notifs);
       setUnreadCount(notifs.filter(n => !n.isRead).length);
       setLoading(false);
+    }, (error) => {
+      console.error("Error fetching notifications:", error);
+      setLoading(false); // Ensure loading stops on error
     });
 
     return () => unsubscribe();

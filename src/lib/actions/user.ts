@@ -177,3 +177,18 @@ export async function searchUsers(searchQuery: string): Promise<UserProfile[]> {
 
     return users;
 }
+
+
+export async function getFollowList(userIds: string[]): Promise<UserProfile[]> {
+    if (!userIds || userIds.length === 0) {
+        return [];
+    }
+    
+    const usersRef = collection(db, "users");
+    // Firestore 'in' query is limited to 30 items. 
+    // For a production app, this would need pagination or a different approach.
+    const q = query(usersRef, where('uid', 'in', userIds.slice(0, 30)));
+    
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => doc.data() as UserProfile);
+}

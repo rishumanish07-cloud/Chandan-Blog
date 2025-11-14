@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { useParams } from "next/navigation";
 import { doc, onSnapshot, collection, query, where, getDocs, orderBy } from "firebase/firestore";
 import { db } from "@/lib/firebase/config";
@@ -139,14 +140,14 @@ export default function UserProfilePage() {
               <p className="font-bold text-lg">{posts.length}</p>
               <p className="text-sm text-muted-foreground">Posts</p>
             </div>
-            <div className="text-center">
+            <Link href={`/users/${id}/followers`} className="text-center hover:underline">
               <p className="font-bold text-lg">{profile.followers?.length ?? 0}</p>
               <p className="text-sm text-muted-foreground">Followers</p>
-            </div>
-            <div className="text-center">
+            </Link>
+            <Link href={`/users/${id}/following`} className="text-center hover:underline">
               <p className="font-bold text-lg">{profile.following?.length ?? 0}</p>
               <p className="text-sm text-muted-foreground">Following</p>
-            </div>
+            </Link>
           </div>
           {!isOwnProfile && currentUser && (
             <div className="pt-4">
