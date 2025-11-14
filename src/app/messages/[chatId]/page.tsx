@@ -14,7 +14,7 @@ import {
   doc,
   getDoc,
 } from "firebase/firestore";
-import { sendMessage } from "@/lib/actions/messages";
+import { sendMessage, clearChatHistory } from "@/lib/actions/messages";
 import type { Message, Chat } from "@/lib/types";
 import { formatDistanceToNow } from "date-fns";
 
@@ -22,9 +22,25 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Loader2, Send } from "lucide-react";
+import { ArrowLeft, Loader2, Send, MoreVertical, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export default function ChatPage() {
   const { chatId } = useParams();
@@ -37,6 +53,8 @@ export default function ChatPage() {
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
+  const [isClearing, setIsClearing] = useState(false);
+  const [showClearAlert, setShowClearAlert] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -93,6 +111,20 @@ export default function ChatPage() {
       setIsSending(false);
     }
   };
+  
+  const handleClearChat = async () => {
+    if (!chatId || typeof chatId !== "string") return;
+    setIsClearing(true);
+    try {
+        await clearChatHistory(chatId);
+        toast({ title: "Chat cleared", description: "All messages have been deleted." });
+    } catch (error: any) {
+        toast({ variant: "destructive", title: "Error", description: "Could not clear chat history." });
+    } finally {
+        setIsClearing(false);
+        setShowClearAlert(false);
+    }
+  };
 
   if (loading) {
     return <div className="flex flex-col h-full"><Skeleton className="h-full w-full" /></div>;
@@ -111,7 +143,22 @@ export default function ChatPage() {
             <AvatarImage src={otherUserInfo?.photoURL ?? ''} />
             <AvatarFallback>{otherUserInfo?.displayName?.charAt(0) ?? '?'}</AvatarFallback>
         </Avatar>
-        <h2 className="font-semibold text-lg">{otherUserInfo?.displayName}</h2>
+        <div className="flex-1">
+            <h2 className="font-semibold text-lg">{otherUserInfo?.displayName}</h2>
+        </div>
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon">
+                    <MoreVertical />
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+                <DropdownMenuItem onSelect={() => setShowClearAlert(true)} className="text-destructive">
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    <span>Clear Chat</span>
+                </DropdownMenuItem>
+            </DropdownMenuContent>
+        </DropdownMenu>
       </header>
 
       <main className="flex-1 overflow-y-auto p-4 space-y-4">
@@ -163,6 +210,25 @@ export default function ChatPage() {
           </Button>
         </form>
       </footer>
+      
+      <AlertDialog open={showClearAlert} onOpenChange={setShowClearAlert}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete all messages in this chat.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleClearChat} disabled={isClearing} className="bg-destructive hover:bg-destructive/90">
+              {isClearing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              Clear Chat
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
     </div>
   );
 }

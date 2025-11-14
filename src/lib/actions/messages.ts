@@ -9,6 +9,9 @@ import {
   addDoc,
   serverTimestamp,
   updateDoc,
+  query,
+  getDocs,
+  writeBatch,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase/config";
 import type { UserProfile } from "@/lib/types";
@@ -94,4 +97,21 @@ export async function sendMessage(
       createdAt: serverTimestamp(),
     },
   });
+}
+
+export async function clearChatHistory(chatId: string) {
+    const messagesColRef = collection(db, "chats", chatId, "messages");
+    const messagesQuery = query(messagesColRef);
+    const messagesSnap = await getDocs(messagesQuery);
+
+    const batch = writeBatch(db);
+
+    messagesSnap.forEach(doc => {
+        batch.delete(doc.ref);
+    });
+
+    const chatRef = doc(db, "chats", chatId);
+    batch.update(chatRef, { lastMessage: null });
+    
+    await batch.commit();
 }
