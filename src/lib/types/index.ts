@@ -34,3 +34,17 @@ export interface Comment {
   authorPhotoURL: string;
   createdAt: Timestamp;
 }
+
+export interface Notification {
+  id: string;
+  recipientId: string;
+  senderId: string;
+  senderName: string;
+  senderPhotoURL: string;
+  type: 'like' | 'comment' | 'follow_request';
+  postId?: string;
+  postTitle?: string;
+  commentText?: string;
+  isRead: boolean;
+  createdAt: Timestamp;
+}

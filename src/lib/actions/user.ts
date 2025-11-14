@@ -6,6 +6,7 @@ import type { UserProfile } from "../types";
 import { writeFile, mkdir } from "fs/promises";
 import { join } from "path";
 import { revalidatePath } from "next/cache";
+import { createNotification } from "./notifications";
 
 export async function updateUserProfile(user: UserProfile, formData: FormData) {
     const displayName = formData.get("displayName") as string;
@@ -74,10 +75,13 @@ export async function handleFollowRequest(currentUserId: string, targetUserId: s
   const currentUserRef = doc(db, "users", currentUserId);
   const targetUserRef = doc(db, "users", targetUserId);
 
-  const targetUserSnap = await getDoc(targetUserRef);
-  if (!targetUserSnap.exists()) {
+  const [currentUserSnap, targetUserSnap] = await Promise.all([getDoc(currentUserRef), getDoc(targetUserRef)]);
+
+  if (!currentUserSnap.exists() || !targetUserSnap.exists()) {
     throw new Error("User not found.");
   }
+  
+  const currentUserData = currentUserSnap.data() as UserProfile;
   const targetUserData = targetUserSnap.data() as UserProfile;
 
   if (targetUserData.accountType === 'public') {
@@ -90,6 +94,15 @@ export async function handleFollowRequest(currentUserId: string, targetUserId: s
     // Private account: send a follow request
     await updateDoc(targetUserRef, {
       followRequests: arrayUnion(currentUserId),
+    });
+
+    // Create notification
+    await createNotification({
+      recipientId: targetUserId,
+      senderId: currentUserId,
+      senderName: currentUserData.displayName || currentUserData.email!,
+      senderPhotoURL: currentUserData.photoURL || '',
+      type: 'follow_request',
     });
   }
   revalidatePath(`/users/${targetUserId}`);

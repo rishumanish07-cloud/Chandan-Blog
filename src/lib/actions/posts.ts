@@ -19,6 +19,7 @@ import type { UserProfile } from "@/lib/types";
 import { redirect } from "next/navigation";
 import { writeFile, mkdir, unlink } from "fs/promises";
 import { join } from "path";
+import { createNotification } from "./notifications";
 
 export async function createPost(user: UserProfile, formData: FormData) {
   const title = formData.get("title") as string;
@@ -205,6 +206,23 @@ export async function toggleLike(postId: string, userId: string) {
             updates.dislikes = arrayRemove(userId);
         }
         await updateDoc(postRef, updates);
+        
+        // Create notification if the user is not the post author
+        if (postData.authorId !== userId) {
+          const userSnap = await getDoc(doc(db, 'users', userId));
+          if(userSnap.exists()){
+            const sender = userSnap.data() as UserProfile;
+            await createNotification({
+              recipientId: postData.authorId,
+              senderId: sender.uid,
+              senderName: sender.displayName || sender.email!,
+              senderPhotoURL: sender.photoURL || '',
+              type: 'like',
+              postId: postId,
+              postTitle: postData.title,
+            });
+          }
+        }
     }
 
     revalidatePath(`/posts/${postId}`);
@@ -256,6 +274,13 @@ export async function addComment(postId: string, user: UserProfile, commentText:
       throw new Error("Comment cannot be empty.");
     }
     
+    const postRef = doc(db, "posts", postId);
+    const postSnap = await getDoc(postRef);
+    if (!postSnap.exists()) {
+        throw new Error("Post not found");
+    }
+    const postData = postSnap.data();
+    
     const userRef = doc(db, "users", user.uid);
     const userSnap = await getDoc(userRef);
     const userData = userSnap.data() as UserProfile;
@@ -270,6 +295,19 @@ export async function addComment(postId: string, user: UserProfile, commentText:
     };
   
     await addDoc(collection(db, "posts", postId, "comments"), commentData);
+  
+    if (postData.authorId !== user.uid) {
+        await createNotification({
+          recipientId: postData.authorId,
+          senderId: user.uid,
+          senderName: userData.displayName || userData.email!,
+          senderPhotoURL: userData.photoURL || '',
+          type: 'comment',
+          postId: postId,
+          postTitle: postData.title,
+          commentText: commentText,
+        });
+    }
   
     revalidatePath(`/posts/${postId}`);
 }

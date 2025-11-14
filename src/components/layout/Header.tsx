@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { BookMarked, LogOut, PlusCircle, User as UserIcon, Settings, Users } from "lucide-react";
+import { BookMarked, LogOut, PlusCircle, User as UserIcon, Settings } from "lucide-react";
 import { useAuth } from "@/lib/auth/hooks";
 import { signOutWithGoogle } from "@/lib/actions/auth";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,7 @@ import {
 import { Skeleton } from "../ui/skeleton";
 import { ModeToggle } from "./ModeToggle";
 import { UserSearch } from "./UserSearch";
+import { NotificationBell } from "./NotificationBell";
 
 export function Header() {
   const { user, loading } = useAuth();
@@ -42,6 +43,7 @@ export function Header() {
                 <Skeleton className="h-10 w-24 rounded-md" />
               ) : user ? (
                 <>
+                  <NotificationBell />
                   <Button asChild variant="ghost">
                     <Link href="/posts/new">
                       <PlusCircle className="mr-2 h-4 w-4" />
