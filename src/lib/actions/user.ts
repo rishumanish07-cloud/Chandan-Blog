@@ -1,6 +1,6 @@
 "use server";
 
-import { doc, setDoc, updateDoc, arrayUnion, arrayRemove, getDoc, writeBatch, collection, query, where, getDocs } from "firebase/firestore";
+import { doc, setDoc, updateDoc, arrayUnion, arrayRemove, getDoc, writeBatch, collection, query, where, getDocs, limit, orderBy } from "firebase/firestore";
 import { db } from "@/lib/firebase/config";
 import type { UserProfile } from "../types";
 import { writeFile, mkdir } from "fs/promises";
@@ -136,4 +136,31 @@ export async function respondToFollowRequest(
   
   await batch.commit();
   revalidatePath('/profile');
+}
+
+export async function searchUsers(searchQuery: string): Promise<UserProfile[]> {
+    if (!searchQuery) {
+      return [];
+    }
+  
+    const usersRef = collection(db, "users");
+    
+    // Firestore doesn't support case-insensitive searches natively.
+    // This is a common workaround for prefix searching.
+    const q = query(
+      usersRef,
+      where("displayName", ">=", searchQuery),
+      where("displayName", "<=", searchQuery + "\uf8ff"),
+      limit(10)
+    );
+  
+    const querySnapshot = await getDocs(q);
+    
+    const users = querySnapshot.docs.map(doc => doc.data() as UserProfile);
+    
+    // Additional client-side filtering can be done here if needed, 
+    // but for simplicity, we rely on the Firestore query.
+    // For a more robust search, one might store a lowercased version of displayName.
+
+    return users;
 }
