@@ -77,7 +77,7 @@ export function ProfileForm({ user }: { user: NonNullable<ReturnType<typeof useA
 
   return (
     <div>
-      <h1 className="font-headline text-4xl font-bold mb-8">Edit Profile</h1>
+      <h1 className="font-headline text-3xl sm:text-4xl font-bold mb-8">Edit Profile</h1>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
 
         <div className="space-y-2">
@@ -112,11 +112,11 @@ export function ProfileForm({ user }: { user: NonNullable<ReturnType<typeof useA
         <div className="space-y-4">
             <Label>Profile Picture</Label>
             <div className="flex items-center gap-6">
-                <Avatar className="h-24 w-24">
+                <Avatar className="h-20 w-20 sm:h-24 sm:w-24">
                     <AvatarImage src={previewUrl ?? ""} alt="Profile preview" />
-                    <AvatarFallback><User className="h-10 w-10"/></AvatarFallback>
+                    <AvatarFallback><User className="h-8 w-8 sm:h-10 sm:w-10"/></AvatarFallback>
                 </Avatar>
-                <label htmlFor="image-upload" className="cursor-pointer rounded-md bg-secondary px-4 py-2 text-secondary-foreground hover:bg-secondary/80">
+                <label htmlFor="image-upload" className="cursor-pointer rounded-md bg-secondary px-4 py-2 text-secondary-foreground hover:bg-secondary/80 text-sm sm:text-base">
                     <span>Change Picture</span>
                     <input id="image-upload" type="file" className="hidden" accept="image/png, image/jpeg, image/webp" onChange={handleImageChange} />
                 </label>

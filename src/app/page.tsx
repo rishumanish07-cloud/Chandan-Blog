@@ -44,8 +44,8 @@ export default function Home() {
         Latest Posts
       </h1>
       {loading ? (
-        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: 3 }).map((_, i) => (
+        <div className="grid gap-8 grid-cols-1 md:grid-cols-2">
+          {Array.from({ length: 4 }).map((_, i) => (
             <div key={i} className="space-y-4">
               <Skeleton className="h-[250px] w-full rounded-lg" />
               <Skeleton className="h-6 w-3/4" />
@@ -54,7 +54,7 @@ export default function Home() {
           ))}
         </div>
       ) : filteredPosts.length > 0 ? (
-        <div className="grid gap-10 md:grid-cols-2">
+        <div className="grid gap-10 grid-cols-1 md:grid-cols-2">
           {filteredPosts.map((post) => (
             <PostCard key={post.id} post={post} />
           ))}

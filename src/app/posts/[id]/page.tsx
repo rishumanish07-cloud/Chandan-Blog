@@ -156,7 +156,7 @@ export default function PostPage() {
         <h1 className="font-headline text-3xl md:text-5xl font-extrabold leading-tight tracking-tighter mb-4">
           {post.title}
         </h1>
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex items-center space-x-4 text-sm text-muted-foreground">
               <Link href={`/users/${post.authorId}`} className="flex items-center gap-2 hover:underline">
                   <Avatar className="h-9 w-9">
@@ -170,16 +170,16 @@ export default function PostPage() {
               </Link>
             </div>
             {isAuthor && (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 self-end sm:self-center">
                 <Button variant="outline" size="sm" asChild>
                   <Link href={`/posts/${post.id}/edit`}>
-                    <Edit className="mr-2 h-4 w-4" /> Edit
+                    <Edit className="mr-0 sm:mr-2 h-4 w-4" /> <span className="hidden sm:inline">Edit</span>
                   </Link>
                 </Button>
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
                     <Button variant="destructive" size="sm" disabled={isDeleting}>
-                      <Trash2 className="mr-2 h-4 w-4" /> Delete
+                      <Trash2 className="mr-0 sm:mr-2 h-4 w-4" /> <span className="hidden sm:inline">Delete</span>
                     </Button>
                   </AlertDialogTrigger>
                   <AlertDialogContent>
@@ -218,7 +218,7 @@ export default function PostPage() {
 
       <div className="prose prose-lg dark:prose-invert max-w-none mb-8" dangerouslySetInnerHTML={{ __html: post.content.replace(/\n/g, '<br />') }} />
       
-      <div className="flex items-center justify-between border-t border-b py-4 my-8">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-b py-4 my-8">
         <div className="flex items-center gap-2">
             <LikeButton postId={post.id} likes={post.likes} dislikes={post.dislikes} />
             <DislikeButton postId={post.id} dislikes={post.dislikes} likes={post.likes} />

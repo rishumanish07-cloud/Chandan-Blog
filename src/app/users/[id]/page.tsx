@@ -119,8 +119,8 @@ export default function UserProfilePage() {
   if (loading) {
     return (
       <div className="container mx-auto max-w-4xl py-12 px-4 space-y-8">
-        <div className="flex items-center gap-8">
-            <Skeleton className="h-32 w-32 rounded-full" />
+        <div className="flex flex-col sm:flex-row items-center gap-8">
+            <Skeleton className="h-24 w-24 sm:h-32 sm:w-32 rounded-full" />
             <div className="space-y-4 flex-1">
                 <Skeleton className="h-8 w-1/2" />
                 <Skeleton className="h-4 w-1/3" />
@@ -142,14 +142,14 @@ export default function UserProfilePage() {
   return (
     <div className="container mx-auto max-w-4xl py-12 px-4 space-y-8">
       <div className="flex flex-col sm:flex-row items-center gap-8">
-        <Avatar className="h-32 w-32">
+        <Avatar className="h-24 w-24 sm:h-32 sm:w-32">
           <AvatarImage src={profile.photoURL ?? undefined} />
           <AvatarFallback>
-            <User className="h-16 w-16" />
+            <User className="h-12 w-12 sm:h-16 sm:w-16" />
           </AvatarFallback>
         </Avatar>
         <div className="space-y-2 text-center sm:text-left">
-          <h1 className="font-headline text-4xl font-bold">{profile.displayName}</h1>
+          <h1 className="font-headline text-3xl sm:text-4xl font-bold">{profile.displayName}</h1>
           <p className="text-muted-foreground">{profile.bio}</p>
           <div className="flex justify-center sm:justify-start items-center gap-6 pt-2">
             <div className="text-center">
@@ -166,7 +166,7 @@ export default function UserProfilePage() {
             </Link>
           </div>
           {!isOwnProfile && currentUser && (
-            <div className="pt-4 flex gap-2">
+            <div className="pt-4 flex flex-col sm:flex-row gap-2">
               {isFollowing ? (
                 <Button variant="outline" onClick={handleUnfollowAction} disabled={isActionButtonLoading}>
                   {isActionButtonLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -202,7 +202,7 @@ export default function UserProfilePage() {
         <h2 className="text-2xl font-bold mb-6">Posts</h2>
         {canSeePosts ? (
           posts.length > 0 ? (
-            <div className="grid gap-10 md:grid-cols-2">
+            <div className="grid gap-10 grid-cols-1 md:grid-cols-2">
               {posts.map((post) => (
                 <PostCard key={post.id} post={post} />
               ))}

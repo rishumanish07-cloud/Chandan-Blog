@@ -10,7 +10,7 @@ export default function HomePage() {
       <h1 className="font-headline text-4xl font-bold tracking-tight text-foreground sm:text-5xl lg:text-6xl mb-12">
         Welcome, {user?.displayName || "User"}!
       </h1>
-      <div className="bg-card p-8 rounded-lg shadow-md">
+      <div className="bg-card p-6 sm:p-8 rounded-lg shadow-md">
         <h2 className="text-2xl font-bold mb-4">You are logged in!</h2>
         <p className="text-muted-foreground">
           You can now create new posts, like and comment on existing ones.

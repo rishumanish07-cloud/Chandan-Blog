@@ -29,15 +29,15 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-14 max-w-screen-2xl items-center">
-        <Link href="/" className="mr-6 flex items-center space-x-2">
+        <Link href="/" className="mr-4 flex items-center space-x-2">
           <BookMarked className="h-6 w-6 text-primary" />
-          <span className="font-headline text-lg font-bold">Reflex Blog</span>
+          <span className="font-headline text-lg font-bold hidden sm:inline-block">Reflex Blog</span>
         </Link>
-        <div className="flex flex-1 items-center justify-between space-x-4">
-            <div className="w-full flex-1 md:w-auto md:flex-none">
+        <div className="flex flex-1 items-center justify-end space-x-2 sm:space-x-4">
+            <div className="w-full flex-1 md:w-auto md:flex-none max-w-xs">
               <UserSearch />
             </div>
-            <nav className="flex items-center space-x-2">
+            <nav className="flex items-center space-x-1 sm:space-x-2">
               <ModeToggle />
               {loading ? (
                 <Skeleton className="h-10 w-24 rounded-md" />
@@ -49,7 +49,7 @@ export function Header() {
                       <MessageSquare className="h-5 w-5" />
                     </Link>
                   </Button>
-                  <Button asChild variant="ghost">
+                  <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
                     <Link href="/posts/new">
                       <PlusCircle className="mr-2 h-4 w-4" />
                       New Post
@@ -74,6 +74,12 @@ export function Header() {
                         </div>
                       </DropdownMenuLabel>
                       <DropdownMenuSeparator />
+                       <DropdownMenuItem asChild className="sm:hidden">
+                        <Link href="/posts/new">
+                          <PlusCircle className="mr-2 h-4 w-4" />
+                          <span>New Post</span>
+                        </Link>
+                      </DropdownMenuItem>
                       <DropdownMenuItem asChild>
                         <Link href="/profile">
                           <Settings className="mr-2 h-4 w-4" />
