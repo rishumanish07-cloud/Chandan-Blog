@@ -2,17 +2,19 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { useParams } from "next/navigation";
+import Link from "next/link";
+import { useParams, useRouter } from "next/navigation";
 import { doc, onSnapshot } from "firebase/firestore";
 import { format } from "date-fns";
 import { db } from "@/lib/firebase/config";
 import type { Post } from "@/lib/types";
 import { useAuth } from "@/lib/auth/hooks";
 import { summarizePost } from "@/ai/flows/ai-summarize-post";
+import { deletePost } from "@/lib/actions/posts";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
-import { User, Sparkles, Loader2 } from "lucide-react";
+import { User, Sparkles, Loader2, Edit, Trash2 } from "lucide-react";
 import { LikeButton } from "@/components/blog/LikeButton";
 import { DislikeButton } from "@/components/blog/DislikeButton";
 import { CommentSection } from "@/components/blog/CommentSection";
@@ -20,22 +22,27 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import {
   AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
   AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogTitle,
   AlertDialogDescription,
   AlertDialogFooter,
-  AlertDialogAction,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+
 
 export default function PostPage() {
   const { id } = useParams();
   const { user } = useAuth();
   const { toast } = useToast();
+  const router = useRouter();
   const [post, setPost] = useState<Post | null>(null);
   const [loading, setLoading] = useState(true);
   const [isSummarizing, setIsSummarizing] = useState(false);
   const [summary, setSummary] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     if (typeof id !== "string") return;
@@ -70,6 +77,28 @@ export default function PostPage() {
     }
   };
 
+  const handleDelete = async () => {
+    if (!post || !user || user.uid !== post.authorId) return;
+
+    setIsDeleting(true);
+    try {
+      await deletePost(post.id, post.authorId);
+      toast({
+        title: "Post Deleted",
+        description: "Your post has been successfully deleted.",
+      });
+      router.push("/");
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Deletion Failed",
+        description: error.message || "Could not delete the post.",
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
 
   if (loading) {
     return (
@@ -91,6 +120,7 @@ export default function PostPage() {
   }
 
   const postDate = post.createdAt ? format(post.createdAt.toDate(), "MMMM d, yyyy 'at' h:mm a") : "";
+  const isAuthor = user && user.uid === post.authorId;
 
   return (
     <article className="container mx-auto max-w-4xl py-8 sm:py-12 px-4">
@@ -98,17 +128,49 @@ export default function PostPage() {
         <h1 className="font-headline text-3xl md:text-5xl font-extrabold leading-tight tracking-tighter mb-4">
           {post.title}
         </h1>
-        <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-          <div className="flex items-center gap-2">
-            <Avatar className="h-9 w-9">
-              <AvatarImage src={post.authorPhotoURL} alt={post.authorName} />
-              <AvatarFallback><User className="h-4 w-4" /></AvatarFallback>
-            </Avatar>
-            <div>
-              <p className="font-medium text-foreground">{post.authorName}</p>
-              <p>{postDate}</p>
+        <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+            <div className="flex items-center gap-2">
+                <Avatar className="h-9 w-9">
+                <AvatarImage src={post.authorPhotoURL} alt={post.authorName} />
+                <AvatarFallback><User className="h-4 w-4" /></AvatarFallback>
+                </Avatar>
+                <div>
+                <p className="font-medium text-foreground">{post.authorName}</p>
+                <p>{postDate}</p>
+                </div>
             </div>
-          </div>
+            </div>
+            {isAuthor && (
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" asChild>
+                  <Link href={`/posts/${post.id}/edit`}>
+                    <Edit className="mr-2 h-4 w-4" /> Edit
+                  </Link>
+                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive" size="sm" disabled={isDeleting}>
+                      <Trash2 className="mr-2 h-4 w-4" /> Delete
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This action cannot be undone. This will permanently delete your post and remove its data from our servers.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleDelete} disabled={isDeleting}>
+                        {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Delete"}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
+            )}
         </div>
       </header>
       

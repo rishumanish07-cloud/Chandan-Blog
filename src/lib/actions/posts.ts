@@ -9,12 +9,16 @@ import {
   updateDoc,
   arrayUnion,
   arrayRemove,
-  getDoc
+  getDoc,
+  writeBatch,
+  getDocs,
+  deleteDoc,
+  query
 } from "firebase/firestore";
 import { db } from "@/lib/firebase/config";
-import type { UserProfile } from "@/lib/types";
+import type { UserProfile, Post } from "@/lib/types";
 import { redirect } from "next/navigation";
-import { writeFile, mkdir } from "fs/promises";
+import { writeFile, mkdir, unlink } from "fs/promises";
 import { join } from "path";
 
 export async function createPost(user: UserProfile, formData: FormData) {
@@ -33,22 +37,18 @@ export async function createPost(user: UserProfile, formData: FormData) {
   let imageUrl = "";
   if (imageFile && imageFile.size > 0) {
     try {
-      // Create uploads directory if it doesn't exist
       const uploadsDir = join(process.cwd(), "public", "uploads", "posts");
       await mkdir(uploadsDir, { recursive: true });
 
-      // Generate unique filename
       const timestamp = Date.now();
       const sanitizedName = imageFile.name.replace(/[^a-zA-Z0-9.-]/g, "_");
       const filename = `${timestamp}_${sanitizedName}`;
       const filepath = join(uploadsDir, filename);
 
-      // Convert File to Buffer and save
       const bytes = await imageFile.arrayBuffer();
       const buffer = Buffer.from(bytes);
       await writeFile(filepath, buffer);
 
-      // Store relative path for Firestore (starts with /uploads/...)
       imageUrl = `/uploads/posts/${filename}`;
     } catch (error) {
       console.error("Error saving image:", error);
@@ -72,6 +72,101 @@ export async function createPost(user: UserProfile, formData: FormData) {
 
   revalidatePath("/");
   redirect(`/posts/${docRef.id}`);
+}
+
+export async function updatePost(postId: string, userId: string, formData: FormData) {
+  const postRef = doc(db, "posts", postId);
+  const postSnap = await getDoc(postRef);
+
+  if (!postSnap.exists()) {
+    throw new Error("Post not found.");
+  }
+
+  const postData = postSnap.data();
+
+  if (postData.authorId !== userId) {
+    throw new Error("You are not authorized to edit this post.");
+  }
+  
+  const title = formData.get("title") as string;
+  const content = formData.get("content") as string;
+  const imageFile = formData.get("image") as File;
+  let imageUrl = postData.imageUrl;
+
+  if (imageFile && imageFile.size > 0) {
+    // Delete old image if it exists
+    if (imageUrl) {
+      try {
+        await unlink(join(process.cwd(), "public", imageUrl));
+      } catch (error) {
+        console.warn("Could not delete old image, it might not exist:", error);
+      }
+    }
+    
+    // Upload new image
+    try {
+      const uploadsDir = join(process.cwd(), "public", "uploads", "posts");
+      await mkdir(uploadsDir, { recursive: true });
+      const timestamp = Date.now();
+      const sanitizedName = imageFile.name.replace(/[^a-zA-Z0-9.-]/g, "_");
+      const filename = `${timestamp}_${sanitizedName}`;
+      const filepath = join(uploadsDir, filename);
+      const bytes = await imageFile.arrayBuffer();
+      const buffer = Buffer.from(bytes);
+      await writeFile(filepath, buffer);
+      imageUrl = `/uploads/posts/${filename}`;
+    } catch (error) {
+      console.error("Error saving image:", error);
+      throw new Error("Failed to save image. Please try again.");
+    }
+  }
+
+  await updateDoc(postRef, {
+    title,
+    content,
+    imageUrl,
+  });
+
+  revalidatePath(`/posts/${postId}`);
+  revalidatePath("/");
+  redirect(`/posts/${postId}`);
+}
+
+export async function deletePost(postId: string, userId: string) {
+    const postRef = doc(db, "posts", postId);
+    const postSnap = await getDoc(postRef);
+  
+    if (!postSnap.exists()) {
+      throw new Error("Post not found.");
+    }
+  
+    const postData = postSnap.data();
+    if (postData.authorId !== userId) {
+      throw new Error("You are not authorized to delete this post.");
+    }
+  
+    // Delete associated image file
+    if (postData.imageUrl) {
+      try {
+        await unlink(join(process.cwd(), "public", postData.imageUrl));
+      } catch (error) {
+        console.warn("Could not delete image file, it may not exist:", error);
+      }
+    }
+  
+    // Delete comments subcollection
+    const commentsRef = collection(db, "posts", postId, "comments");
+    const commentsSnap = await getDocs(commentsRef);
+    const batch = writeBatch(db);
+    commentsSnap.docs.forEach((doc) => {
+      batch.delete(doc.ref);
+    });
+    await batch.commit();
+  
+    // Delete the post document
+    await deleteDoc(postRef);
+  
+    revalidatePath("/");
 }
 
 

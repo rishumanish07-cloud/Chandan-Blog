@@ -5,8 +5,9 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useAuth } from "@/lib/auth/hooks";
-import { createPost } from "@/lib/actions/posts";
+import { createPost, updatePost } from "@/lib/actions/posts";
 import { generateBlogParagraph } from "@/ai/flows/ai-generate-content";
+import type { Post } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -22,16 +23,25 @@ const postFormSchema = z.object({
 
 type PostFormValues = z.infer<typeof postFormSchema>;
 
-export function PostForm() {
+type PostFormProps = {
+    post?: Post;
+}
+
+export function PostForm({ post }: PostFormProps) {
   const { user } = useAuth();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(post?.imageUrl || null);
+
+  const isEditMode = !!post;
 
   const form = useForm<PostFormValues>({
     resolver: zodResolver(postFormSchema),
-    defaultValues: { title: "", content: "" },
+    defaultValues: { 
+        title: post?.title || "", 
+        content: post?.content || "",
+    },
   });
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -89,24 +99,32 @@ export function PostForm() {
     }
 
     try {
-      await createPost(user, formData);
-      toast({
-        title: "Post Created!",
-        description: "Your new blog post is now live.",
-      });
+      if (isEditMode) {
+        await updatePost(post.id, user.uid, formData);
+        toast({
+          title: "Post Updated!",
+          description: "Your blog post has been successfully updated.",
+        });
+      } else {
+        await createPost(user, formData);
+        toast({
+          title: "Post Created!",
+          description: "Your new blog post is now live.",
+        });
+      }
     } catch (error: any) {
       toast({
         variant: "destructive",
-        title: "Failed to Create Post",
+        title: isEditMode ? "Failed to Update Post" : "Failed to Create Post",
         description: error.message,
       });
-      setIsSubmitting(false);
+      setIsSubmitting(false); // only on error, success redirects
     }
   };
 
   return (
     <div className="container mx-auto max-w-3xl py-12">
-      <h1 className="font-headline text-4xl font-bold mb-8">Create New Post</h1>
+      <h1 className="font-headline text-4xl font-bold mb-8">{isEditMode ? "Edit Post" : "Create New Post"}</h1>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
         <div className="space-y-2">
           <label htmlFor="title" className="text-sm font-medium">Title</label>
@@ -147,7 +165,7 @@ export function PostForm() {
 
         <Button type="submit" disabled={isSubmitting}>
           {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Publish Post
+          {isEditMode ? "Save Changes" : "Publish Post"}
         </Button>
       </form>
     </div>
