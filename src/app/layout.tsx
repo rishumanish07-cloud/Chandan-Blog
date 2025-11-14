@@ -6,7 +6,7 @@ import { ThemeProvider } from "@/components/layout/ThemeProvider";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "FireBlog",
+  title: "Reflex Blog",
   description: "A modern blog platform powered by Firebase and Next.js",
 };
 

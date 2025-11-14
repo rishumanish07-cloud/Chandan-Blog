@@ -103,7 +103,7 @@ export default function ChatPage() {
   return (
     <div className="flex flex-col h-full border rounded-lg">
       <header className="flex items-center gap-4 p-4 border-b">
-        <Link href="/messages" className="md:hidden">
+        <Link href="/messages">
             <Button variant="ghost" size="icon"><ArrowLeft/></Button>
         </Link>
         <Avatar>
@@ -138,6 +138,12 @@ export default function ChatPage() {
             >
               <p>{message.text}</p>
             </div>
+             {message.senderId === user?.uid && (
+                <Avatar className="h-8 w-8">
+                    <AvatarImage src={user?.photoURL ?? ''} />
+                    <AvatarFallback>{user?.displayName?.charAt(0) ?? 'U'}</AvatarFallback>
+                </Avatar>
+            )}
           </div>
         ))}
         <div ref={messagesEndRef} />
