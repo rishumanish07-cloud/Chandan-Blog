@@ -7,8 +7,10 @@ import type { Post } from "@/lib/types";
 import { PostCard } from "@/components/blog/PostCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FileText } from "lucide-react";
+import { useAuth } from "@/lib/auth/hooks";
 
 export default function Home() {
+  const { user } = useAuth();
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -25,6 +27,16 @@ export default function Home() {
 
     return () => unsubscribe();
   }, []);
+  
+  const filteredPosts = posts.filter(post => {
+    if (post.authorAccountType === 'private') {
+        if (!user) return false; // Not logged in, can't see private posts
+        if (post.authorId === user.uid) return true; // It's the user's own post
+        const authorInFollowing = user.following?.includes(post.authorId);
+        return authorInFollowing; // Can see if following the private user
+    }
+    return true; // Public post, always visible
+  });
 
   return (
     <div className="container mx-auto max-w-5xl py-8 px-4 sm:px-6 lg:px-8">
@@ -41,9 +53,9 @@ export default function Home() {
             </div>
           ))}
         </div>
-      ) : posts.length > 0 ? (
+      ) : filteredPosts.length > 0 ? (
         <div className="grid gap-10 md:grid-cols-2">
-          {posts.map((post) => (
+          {filteredPosts.map((post) => (
             <PostCard key={post.id} post={post} />
           ))}
         </div>
@@ -52,7 +64,7 @@ export default function Home() {
           <FileText className="mx-auto h-12 w-12 text-muted-foreground" />
           <h3 className="mt-4 text-lg font-medium text-muted-foreground">No posts yet</h3>
           <p className="mt-1 text-sm text-muted-foreground">
-            Be the first one to create a post!
+            There are no posts to see right now.
           </p>
         </div>
       )}

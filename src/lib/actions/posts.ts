@@ -13,10 +13,9 @@ import {
   writeBatch,
   getDocs,
   deleteDoc,
-  query
 } from "firebase/firestore";
 import { db } from "@/lib/firebase/config";
-import type { UserProfile, Post } from "@/lib/types";
+import type { UserProfile } from "@/lib/types";
 import { redirect } from "next/navigation";
 import { writeFile, mkdir, unlink } from "fs/promises";
 import { join } from "path";
@@ -33,6 +32,11 @@ export async function createPost(user: UserProfile, formData: FormData) {
   if (!user) {
     throw new Error("You must be logged in to create a post.");
   }
+  
+  const userRef = doc(db, "users", user.uid);
+  const userSnap = await getDoc(userRef);
+  const userData = userSnap.data() as UserProfile;
+
 
   let imageUrl = "";
   if (imageFile && imageFile.size > 0) {
@@ -61,8 +65,9 @@ export async function createPost(user: UserProfile, formData: FormData) {
     content,
     imageUrl,
     authorId: user.uid,
-    authorName: user.displayName || user.email || "Anonymous",
-    authorPhotoURL: user.photoURL || "",
+    authorName: userData.displayName || userData.email || "Anonymous",
+    authorPhotoURL: userData.photoURL || "",
+    authorAccountType: userData.accountType || "public",
     createdAt: Timestamp.now(),
     likes: [],
     dislikes: [],
@@ -250,12 +255,16 @@ export async function addComment(postId: string, user: UserProfile, commentText:
     if (!commentText.trim()) {
       throw new Error("Comment cannot be empty.");
     }
+    
+    const userRef = doc(db, "users", user.uid);
+    const userSnap = await getDoc(userRef);
+    const userData = userSnap.data() as UserProfile;
   
     const commentData = {
       text: commentText,
       authorId: user.uid,
-      authorName: user.displayName || user.email || "Anonymous",
-      authorPhotoURL: user.photoURL || "",
+      authorName: userData.displayName || userData.email || "Anonymous",
+      authorPhotoURL: userData.photoURL || "",
       createdAt: Timestamp.now(),
       postId: postId
     };

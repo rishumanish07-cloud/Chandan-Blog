@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from 'next/link';
 import { useAuth } from "@/lib/auth/hooks";
 import { addComment } from "@/lib/actions/posts";
 import { collection, query, orderBy, onSnapshot } from "firebase/firestore";
@@ -99,13 +100,15 @@ export function CommentSection({ postId }: CommentSectionProps) {
         ) : comments.length > 0 ? (
           comments.map((comment) => (
             <div key={comment.id} className="flex items-start space-x-4">
-              <Avatar className="h-10 w-10">
-                <AvatarImage src={comment.authorPhotoURL} alt={comment.authorName} />
-                <AvatarFallback><User className="h-5 w-5" /></AvatarFallback>
-              </Avatar>
+              <Link href={`/users/${comment.authorId}`}>
+                <Avatar className="h-10 w-10">
+                  <AvatarImage src={comment.authorPhotoURL} alt={comment.authorName} />
+                  <AvatarFallback><User className="h-5 w-5" /></AvatarFallback>
+                </Avatar>
+              </Link>
               <div className="flex-1">
                 <div className="flex items-center gap-2">
-                  <p className="font-semibold text-sm">{comment.authorName}</p>
+                  <Link href={`/users/${comment.authorId}`} className="font-semibold text-sm hover:underline">{comment.authorName}</Link>
                   <p className="text-xs text-muted-foreground">
                     {formatDistanceToNow(comment.createdAt.toDate(), { addSuffix: true })}
                   </p>

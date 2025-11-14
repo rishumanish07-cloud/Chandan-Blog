@@ -22,6 +22,10 @@ async function createOrUpdateUserInFirestore(user: { uid: string; email: string 
         displayName: user.displayName || user.email,
         photoURL: user.photoURL || "",
         bio: "",
+        accountType: "public",
+        followers: [],
+        following: [],
+        followRequests: [],
       });
     }
 }

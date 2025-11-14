@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { BookMarked, LogOut, PlusCircle, User as UserIcon, Settings } from "lucide-react";
+import { BookMarked, LogOut, PlusCircle, User as UserIcon, Settings, Users } from "lucide-react";
 import { useAuth } from "@/lib/auth/hooks";
 import { signOutWithGoogle } from "@/lib/actions/auth";
 import { Button } from "@/components/ui/button";
@@ -67,6 +67,12 @@ export function Header() {
                       <Link href="/profile">
                         <Settings className="mr-2 h-4 w-4" />
                         <span>Profile</span>
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href={`/users/${user.uid}`}>
+                        <UserIcon className="mr-2 h-4 w-4" />
+                        <span>My Public Profile</span>
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />

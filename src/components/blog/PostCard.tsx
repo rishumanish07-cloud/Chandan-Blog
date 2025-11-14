@@ -4,7 +4,7 @@ import { format } from "date-fns";
 import type { Post } from "@/lib/types";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Heart, ThumbsDown, User } from "lucide-react";
+import { Heart, ThumbsDown, User, Lock } from "lucide-react";
 
 type PostCardProps = {
   post: Post;
@@ -35,7 +35,10 @@ export function PostCard({ post }: PostCardProps) {
       </Link>
       <CardHeader>
         <Link href={`/posts/${post.id}`}>
-          <CardTitle className="font-headline text-2xl leading-tight hover:text-primary transition-colors">{post.title}</CardTitle>
+          <CardTitle className="font-headline text-2xl leading-tight hover:text-primary transition-colors flex items-center gap-2">
+            {post.authorAccountType === 'private' && <Lock className="h-5 w-5 text-muted-foreground" />}
+            {post.title}
+          </CardTitle>
         </Link>
       </CardHeader>
       <CardContent className="flex-grow">
@@ -44,7 +47,7 @@ export function PostCard({ post }: PostCardProps) {
         </p>
       </CardContent>
       <CardFooter className="flex justify-between items-center">
-        <div className="flex items-center gap-2">
+        <Link href={`/users/${post.authorId}`} className="flex items-center gap-2 hover:underline">
           <Avatar className="h-8 w-8">
             <AvatarImage src={post.authorPhotoURL} alt={post.authorName} />
             <AvatarFallback><User className="h-4 w-4" /></AvatarFallback>
@@ -53,7 +56,7 @@ export function PostCard({ post }: PostCardProps) {
             <p className="text-sm font-medium">{post.authorName}</p>
             <p className="text-xs text-muted-foreground">{postDate}</p>
           </div>
-        </div>
+        </Link>
         <div className="flex items-center gap-4 text-muted-foreground">
             <div className="flex items-center gap-1">
                 <Heart className="h-4 w-4" />

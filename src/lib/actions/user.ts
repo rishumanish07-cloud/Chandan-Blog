@@ -1,15 +1,17 @@
 "use server";
 
-import { doc, setDoc } from "firebase/firestore";
+import { doc, setDoc, updateDoc, arrayUnion, arrayRemove, getDoc, writeBatch, collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase/config";
 import type { UserProfile } from "../types";
 import { writeFile, mkdir } from "fs/promises";
 import { join } from "path";
+import { revalidatePath } from "next/cache";
 
 export async function updateUserProfile(user: UserProfile, formData: FormData) {
     const displayName = formData.get("displayName") as string;
     const bio = formData.get("bio") as string;
     const imageFile = formData.get("image") as File;
+    const accountType = formData.get("accountType") as 'public' | 'private';
   
     if (!user) {
       throw new Error("You must be logged in to update your profile.");
@@ -41,11 +43,97 @@ export async function updateUserProfile(user: UserProfile, formData: FormData) {
   
     // Update Firestore user document
     const userRef = doc(db, "users", user.uid);
-    await setDoc(userRef, {
+    const updateData: Partial<UserProfile> = {
       displayName,
       photoURL,
       bio,
-    }, { merge: true });
+      accountType
+    };
+
+    await setDoc(userRef, updateData, { merge: true });
+
+    if (accountType) {
+      const postsQuery = query(collection(db, "posts"), where("authorId", "==", user.uid));
+      const postsSnapshot = await getDocs(postsQuery);
+      const batch = writeBatch(db);
+      postsSnapshot.forEach(postDoc => {
+        batch.update(postDoc.ref, { authorAccountType: accountType });
+      });
+      await batch.commit();
+    }
+    
+    revalidatePath("/profile");
+    revalidatePath(`/users/${user.uid}`);
+    revalidatePath("/");
   
     return { displayName, photoURL, bio };
+}
+
+
+export async function handleFollowRequest(currentUserId: string, targetUserId: string) {
+  const currentUserRef = doc(db, "users", currentUserId);
+  const targetUserRef = doc(db, "users", targetUserId);
+
+  const targetUserSnap = await getDoc(targetUserRef);
+  if (!targetUserSnap.exists()) {
+    throw new Error("User not found.");
+  }
+  const targetUserData = targetUserSnap.data() as UserProfile;
+
+  if (targetUserData.accountType === 'public') {
+    // Public account: directly follow
+    const batch = writeBatch(db);
+    batch.update(currentUserRef, { following: arrayUnion(targetUserId) });
+    batch.update(targetUserRef, { followers: arrayUnion(currentUserId) });
+    await batch.commit();
+  } else {
+    // Private account: send a follow request
+    await updateDoc(targetUserRef, {
+      followRequests: arrayUnion(currentUserId),
+    });
+  }
+  revalidatePath(`/users/${targetUserId}`);
+}
+
+export async function handleUnfollow(currentUserId: string, targetUserId: string) {
+  const currentUserRef = doc(db, "users", currentUserId);
+  const targetUserRef = doc(db, "users", targetUserId);
+  
+  const batch = writeBatch(db);
+  batch.update(currentUserRef, { following: arrayRemove(targetUserId) });
+  batch.update(targetUserRef, { followers: arrayRemove(currentUserId) });
+  await batch.commit();
+  
+  revalidatePath(`/users/${targetUserId}`);
+}
+
+export async function cancelFollowRequest(currentUserId: string, targetUserId: string) {
+  const targetUserRef = doc(db, "users", targetUserId);
+  await updateDoc(targetUserRef, {
+    followRequests: arrayRemove(currentUserId),
+  });
+  revalidatePath(`/users/${targetUserId}`);
+}
+
+
+export async function respondToFollowRequest(
+  currentUserId: string,
+  requesterId: string,
+  action: 'accept' | 'decline'
+) {
+  const currentUserRef = doc(db, "users", currentUserId);
+  const requesterRef = doc(db, "users", requesterId);
+
+  const batch = writeBatch(db);
+  
+  // Always remove the request
+  batch.update(currentUserRef, { followRequests: arrayRemove(requesterId) });
+  
+  if (action === 'accept') {
+    batch.update(currentUserRef, { followers: arrayUnion(requesterId) });
+    batch.update(requesterRef, { following: arrayUnion(currentUserId) });
+  }
+  
+  await batch.commit();
+  revalidatePath('/profile');
 }

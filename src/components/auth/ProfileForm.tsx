@@ -11,14 +11,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, User, Image as ImageIcon } from "lucide-react";
-import NextImage from "next/image";
+import { Loader2, User } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 const profileFormSchema = z.object({
   displayName: z.string().min(2, "Name must be at least 2 characters long.").max(50, "Name must be less than 50 characters."),
   bio: z.string().max(160, "Bio must be less than 160 characters.").optional(),
   image: z.instanceof(File).optional(),
+  accountType: z.enum(['public', 'private']),
 });
 
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
@@ -33,6 +35,7 @@ export function ProfileForm({ user }: { user: NonNullable<ReturnType<typeof useA
     defaultValues: {
       displayName: user.displayName || "",
       bio: user.bio || "",
+      accountType: user.accountType || 'public',
     },
   });
 
@@ -50,6 +53,7 @@ export function ProfileForm({ user }: { user: NonNullable<ReturnType<typeof useA
     const formData = new FormData();
     formData.append("displayName", values.displayName);
     formData.append("bio", values.bio || "");
+    formData.append("accountType", values.accountType);
     if (values.image) {
       formData.append("image", values.image);
     }
@@ -72,24 +76,41 @@ export function ProfileForm({ user }: { user: NonNullable<ReturnType<typeof useA
   };
 
   return (
-    <div className="container mx-auto max-w-2xl py-12">
+    <div>
       <h1 className="font-headline text-4xl font-bold mb-8">Edit Profile</h1>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
 
         <div className="space-y-2">
-            <label htmlFor="displayName" className="text-sm font-medium">Display Name</label>
+            <Label htmlFor="displayName">Display Name</Label>
             <Input id="displayName" placeholder="Your Name" {...form.register("displayName")} />
             {form.formState.errors.displayName && <p className="text-sm text-destructive">{form.formState.errors.displayName.message}</p>}
         </div>
 
         <div className="space-y-2">
-          <label htmlFor="bio" className="text-sm font-medium">Bio</label>
+          <Label htmlFor="bio">Bio</Label>
           <Textarea id="bio" placeholder="Tell us a little about yourself" rows={4} {...form.register("bio")} />
           {form.formState.errors.bio && <p className="text-sm text-destructive">{form.formState.errors.bio.message}</p>}
         </div>
+        
+        <div className="space-y-2">
+            <Label>Account Privacy</Label>
+            <div className="flex items-center space-x-2 rounded-lg border p-4">
+                <Switch 
+                    id="account-type" 
+                    checked={form.watch('accountType') === 'private'}
+                    onCheckedChange={(checked) => form.setValue('accountType', checked ? 'private' : 'public')}
+                />
+                <Label htmlFor="account-type" className="flex flex-col space-y-1">
+                    <span>Private Account</span>
+                    <span className="font-normal leading-snug text-muted-foreground">
+                        If selected, you'll have to approve followers before they can see your posts.
+                    </span>
+                </Label>
+            </div>
+        </div>
 
         <div className="space-y-4">
-            <label className="text-sm font-medium">Profile Picture</label>
+            <Label>Profile Picture</Label>
             <div className="flex items-center gap-6">
                 <Avatar className="h-24 w-24">
                     <AvatarImage src={previewUrl ?? ""} alt="Profile preview" />

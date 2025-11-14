@@ -14,7 +14,7 @@ import { deletePost } from "@/lib/actions/posts";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
-import { User, Sparkles, Loader2, Edit, Trash2 } from "lucide-react";
+import { User, Sparkles, Loader2, Edit, Trash2, Lock } from "lucide-react";
 import { LikeButton } from "@/components/blog/LikeButton";
 import { DislikeButton } from "@/components/blog/DislikeButton";
 import { CommentSection } from "@/components/blog/CommentSection";
@@ -43,6 +43,7 @@ export default function PostPage() {
   const [isSummarizing, setIsSummarizing] = useState(false);
   const [summary, setSummary] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [canView, setCanView] = useState(false);
 
   useEffect(() => {
     if (typeof id !== "string") return;
@@ -50,7 +51,21 @@ export default function PostPage() {
     const postRef = doc(db, "posts", id);
     const unsubscribe = onSnapshot(postRef, (docSnap) => {
       if (docSnap.exists()) {
-        setPost({ id: docSnap.id, ...docSnap.data() } as Post);
+        const postData = { id: docSnap.id, ...docSnap.data() } as Post;
+        setPost(postData);
+
+        if (postData.authorAccountType === 'private') {
+          if (!user) {
+            setCanView(false);
+          } else if (user.uid === postData.authorId) {
+            setCanView(true);
+          } else {
+            setCanView(user.following?.includes(postData.authorId) ?? false);
+          }
+        } else {
+          setCanView(true);
+        }
+
       } else {
         console.error("No such document!");
       }
@@ -58,7 +73,7 @@ export default function PostPage() {
     });
 
     return () => unsubscribe();
-  }, [id]);
+  }, [id, user]);
 
   const handleSummarize = async () => {
     if (!post) return;
@@ -119,6 +134,19 @@ export default function PostPage() {
     return <div className="text-center py-20">Post not found.</div>;
   }
 
+  if (!canView) {
+    return (
+        <div className="container mx-auto max-w-4xl py-12 px-4 text-center">
+            <Lock className="mx-auto h-12 w-12 text-muted-foreground" />
+            <h2 className="mt-4 text-2xl font-bold">This Account is Private</h2>
+            <p className="mt-2 text-muted-foreground">Follow this user to see their posts.</p>
+            <Button asChild className="mt-4">
+                <Link href={`/users/${post.authorId}`}>View Profile</Link>
+            </Button>
+        </div>
+    );
+  }
+
   const postDate = post.createdAt ? format(post.createdAt.toDate(), "MMMM d, yyyy 'at' h:mm a") : "";
   const isAuthor = user && user.uid === post.authorId;
 
@@ -130,16 +158,16 @@ export default function PostPage() {
         </h1>
         <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-            <div className="flex items-center gap-2">
-                <Avatar className="h-9 w-9">
-                <AvatarImage src={post.authorPhotoURL} alt={post.authorName} />
-                <AvatarFallback><User className="h-4 w-4" /></AvatarFallback>
-                </Avatar>
-                <div>
-                <p className="font-medium text-foreground">{post.authorName}</p>
-                <p>{postDate}</p>
-                </div>
-            </div>
+              <Link href={`/users/${post.authorId}`} className="flex items-center gap-2 hover:underline">
+                  <Avatar className="h-9 w-9">
+                  <AvatarImage src={post.authorPhotoURL} alt={post.authorName} />
+                  <AvatarFallback><User className="h-4 w-4" /></AvatarFallback>
+                  </Avatar>
+                  <div>
+                  <p className="font-medium text-foreground">{post.authorName}</p>
+                  <p>{postDate}</p>
+                  </div>
+              </Link>
             </div>
             {isAuthor && (
               <div className="flex items-center gap-2">

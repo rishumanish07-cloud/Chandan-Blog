@@ -6,6 +6,10 @@ export interface UserProfile {
   displayName: string | null;
   photoURL: string | null;
   bio?: string;
+  accountType?: 'public' | 'private';
+  followers?: string[];
+  following?: string[];
+  followRequests?: string[];
 }
 
 export interface Post {
@@ -19,6 +23,7 @@ export interface Post {
   createdAt: Timestamp;
   likes: string[];
   dislikes: string[];
+  authorAccountType?: 'public' | 'private';
 }
 
 export interface Comment {
