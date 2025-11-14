@@ -11,7 +11,8 @@ import type { Chat } from "@/lib/types";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { MessageSquare } from "lucide-react";
+import { MessageSquare, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export default function MessagesPage() {
   const { user } = useAuth();
@@ -69,8 +70,13 @@ export default function MessagesPage() {
 
   return (
     <Card className="h-full">
-      <CardHeader>
+      <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Conversations</CardTitle>
+        <Button asChild variant="ghost" size="icon">
+            <Link href="/home">
+                <X className="h-5 w-5" />
+            </Link>
+        </Button>
       </CardHeader>
       <CardContent>
         {chats.length > 0 ? (
