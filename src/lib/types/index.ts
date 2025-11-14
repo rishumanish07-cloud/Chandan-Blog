@@ -41,10 +41,31 @@ export interface Notification {
   senderId: string;
   senderName: string;
   senderPhotoURL: string;
-  type: 'like' | 'comment' | 'follow_request';
+  type: 'like' | 'comment' | 'follow_request' | 'new_message';
   postId?: string;
   postTitle?: string;
   commentText?: string;
+  chatId?: string;
   isRead: boolean;
   createdAt: Timestamp;
+}
+
+export interface Message {
+  id: string;
+  text: string;
+  senderId: string;
+  createdAt: Timestamp;
+  senderPhotoURL: string;
+  senderName: string;
+}
+
+export interface Chat {
+  id: string;
+  members: string[];
+  memberInfo: { [key: string]: Pick<UserProfile, 'displayName' | 'photoURL'> };
+  lastMessage?: {
+    text: string;
+    senderId: string;
+    createdAt: Timestamp;
+  };
 }

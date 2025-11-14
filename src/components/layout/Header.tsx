@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { BookMarked, LogOut, PlusCircle, User as UserIcon, Settings } from "lucide-react";
+import { BookMarked, LogOut, PlusCircle, User as UserIcon, Settings, MessageSquare } from "lucide-react";
 import { useAuth } from "@/lib/auth/hooks";
 import { signOutWithGoogle } from "@/lib/actions/auth";
 import { Button } from "@/components/ui/button";
@@ -44,6 +44,11 @@ export function Header() {
               ) : user ? (
                 <>
                   <NotificationBell />
+                  <Button asChild variant="ghost" size="icon">
+                    <Link href="/messages">
+                      <MessageSquare className="h-5 w-5" />
+                    </Link>
+                  </Button>
                   <Button asChild variant="ghost">
                     <Link href="/posts/new">
                       <PlusCircle className="mr-2 h-4 w-4" />

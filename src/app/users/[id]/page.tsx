@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { doc, onSnapshot, collection, query, where, getDocs, orderBy } from "firebase/firestore";
 import { db } from "@/lib/firebase/config";
 import type { UserProfile, Post } from "@/lib/types";
@@ -12,11 +12,12 @@ import {
   handleUnfollow,
   cancelFollowRequest,
 } from "@/lib/actions/user";
+import { getOrCreateChat } from "@/lib/actions/messages";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { User, Loader2, Lock, FileText } from "lucide-react";
+import { User, Loader2, Lock, FileText, MessageSquare } from "lucide-react";
 import { PostCard } from "@/components/blog/PostCard";
 import { useToast } from "@/hooks/use-toast";
 
@@ -27,6 +28,8 @@ export default function UserProfilePage() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [isActionButtonLoading, setIsActionButtonLoading] = useState(false);
+  const [isMessageButtonLoading, setIsMessageButtonLoading] = useState(false);
+  const router = useRouter();
   const { toast } = useToast();
 
   const isOwnProfile = currentUser?.uid === id;
@@ -100,6 +103,19 @@ export default function UserProfilePage() {
     }
   };
 
+  const handleMessage = async () => {
+    if (!currentUser || !profile) return;
+    setIsMessageButtonLoading(true);
+    try {
+      const chatId = await getOrCreateChat(currentUser.uid, profile.uid);
+      router.push(`/messages/${chatId}`);
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "Error", description: "Could not start chat. " + error.message });
+    } finally {
+      setIsMessageButtonLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="container mx-auto max-w-4xl py-12 px-4 space-y-8">
@@ -150,7 +166,7 @@ export default function UserProfilePage() {
             </Link>
           </div>
           {!isOwnProfile && currentUser && (
-            <div className="pt-4">
+            <div className="pt-4 flex gap-2">
               {isFollowing ? (
                 <Button variant="outline" onClick={handleUnfollowAction} disabled={isActionButtonLoading}>
                   {isActionButtonLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -165,6 +181,16 @@ export default function UserProfilePage() {
                 <Button onClick={handleFollow} disabled={isActionButtonLoading}>
                   {isActionButtonLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   Follow
+                </Button>
+              )}
+               {isFollowing && (
+                <Button onClick={handleMessage} disabled={isMessageButtonLoading}>
+                  {isMessageButtonLoading ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <MessageSquare className="mr-2 h-4 w-4" />
+                  )}
+                  Message
                 </Button>
               )}
             </div>
