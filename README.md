@@ -19,8 +19,29 @@ For AI features (Genkit with Google Gemini), you need to set up your Google GenA
 
 The `.env.local` file is already in `.gitignore`, so your API key won't be committed to version control.
 
-### Image Storage
+### Image Storage (Vercel Blob)
 
-Images uploaded with blog posts are stored locally in the `public/uploads/posts` directory. The directory is automatically created when needed. Image paths are stored in Firestore as relative paths (e.g., `/uploads/posts/1234567890_image.jpg`).
+Images for blog posts and user avatars are stored in **Vercel Blob Storage** for scalable, production-ready file hosting.
 
-**Note:** The `public/uploads` directory is in `.gitignore` to prevent committing uploaded images to version control. Make sure to back up this directory separately if needed for production deployments.
+**Setup:**
+
+1. Create a Blob Store in your Vercel Dashboard:
+   - Go to [Vercel Dashboard → Storage](https://vercel.com/dashboard/stores)
+   - Click "Create Database" → Select "Blob"
+   - Name it (e.g., "blog-images")
+
+2. Get your Blob token:
+   - After creating the store, copy the `BLOB_READ_WRITE_TOKEN`
+   - Add it to your `.env.local` file:
+     ```
+     BLOB_READ_WRITE_TOKEN=your_token_here
+     ```
+
+3. For local development, you can also use Vercel CLI:
+   ```bash
+   vercel env pull .env.local
+   ```
+
+**Note:** Images are organized by type and user:
+- Post images: `posts/{userId}/{timestamp}_filename.jpg`
+- Avatars: `avatars/{userId}/{timestamp}_filename.jpg`

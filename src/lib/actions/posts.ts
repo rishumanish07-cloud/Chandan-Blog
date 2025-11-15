@@ -17,9 +17,9 @@ import {
 import { db } from "@/lib/firebase/config";
 import type { UserProfile } from "@/lib/types";
 import { redirect } from "next/navigation";
-import { writeFile, mkdir, unlink } from "fs/promises";
-import { join } from "path";
+import { put, del } from "@vercel/blob";
 import { createNotification } from "./notifications";
+import { BLOB_TOKEN } from "@/lib/blob/config";
 
 export async function createPost(user: UserProfile, formData: FormData) {
   const title = formData.get("title") as string;
@@ -42,22 +42,19 @@ export async function createPost(user: UserProfile, formData: FormData) {
   let imageUrl = "";
   if (imageFile && imageFile.size > 0) {
     try {
-      const uploadsDir = join(process.cwd(), "public", "uploads", "posts");
-      await mkdir(uploadsDir, { recursive: true });
-
       const timestamp = Date.now();
       const sanitizedName = imageFile.name.replace(/[^a-zA-Z0-9.-]/g, "_");
-      const filename = `${timestamp}_${sanitizedName}`;
-      const filepath = join(uploadsDir, filename);
+      const filename = `posts/${user.uid}/${timestamp}_${sanitizedName}`;
 
-      const bytes = await imageFile.arrayBuffer();
-      const buffer = Buffer.from(bytes);
-      await writeFile(filepath, buffer);
+      const blob = await put(filename, imageFile, {
+        access: 'public',
+        token: BLOB_TOKEN,
+      });
 
-      imageUrl = `/uploads/posts/${filename}`;
+      imageUrl = blob.url;
     } catch (error) {
-      console.error("Error saving image:", error);
-      throw new Error("Failed to save image. Please try again.");
+      console.error("Error uploading image to Vercel Blob:", error);
+      throw new Error("Failed to upload image. Please try again.");
     }
   }
 
@@ -101,29 +98,29 @@ export async function updatePost(postId: string, userId: string, formData: FormD
 
   if (imageFile && imageFile.size > 0) {
     // Delete old image if it exists
-    if (imageUrl) {
+    if (imageUrl && imageUrl.includes('vercel-storage.com')) {
       try {
-        await unlink(join(process.cwd(), "public", imageUrl));
+        await del(imageUrl, { token: BLOB_TOKEN });
       } catch (error) {
-        console.warn("Could not delete old image, it might not exist:", error);
+        console.warn("Could not delete old image from Vercel Blob:", error);
       }
     }
     
     // Upload new image
     try {
-      const uploadsDir = join(process.cwd(), "public", "uploads", "posts");
-      await mkdir(uploadsDir, { recursive: true });
       const timestamp = Date.now();
       const sanitizedName = imageFile.name.replace(/[^a-zA-Z0-9.-]/g, "_");
-      const filename = `${timestamp}_${sanitizedName}`;
-      const filepath = join(uploadsDir, filename);
-      const bytes = await imageFile.arrayBuffer();
-      const buffer = Buffer.from(bytes);
-      await writeFile(filepath, buffer);
-      imageUrl = `/uploads/posts/${filename}`;
+      const filename = `posts/${userId}/${timestamp}_${sanitizedName}`;
+
+      const blob = await put(filename, imageFile, {
+        access: 'public',
+        token: BLOB_TOKEN,
+      });
+
+      imageUrl = blob.url;
     } catch (error) {
-      console.error("Error saving image:", error);
-      throw new Error("Failed to save image. Please try again.");
+      console.error("Error uploading image to Vercel Blob:", error);
+      throw new Error("Failed to upload image. Please try again.");
     }
   }
 
@@ -151,12 +148,12 @@ export async function deletePost(postId: string, userId: string) {
       throw new Error("You are not authorized to delete this post.");
     }
   
-    // Delete associated image file
-    if (postData.imageUrl) {
+    // Delete associated image file from Vercel Blob
+    if (postData.imageUrl && postData.imageUrl.includes('vercel-storage.com')) {
       try {
-        await unlink(join(process.cwd(), "public", postData.imageUrl));
+        await del(postData.imageUrl, { token: BLOB_TOKEN });
       } catch (error) {
-        console.warn("Could not delete image file, it may not exist:", error);
+        console.warn("Could not delete image from Vercel Blob:", error);
       }
     }
   

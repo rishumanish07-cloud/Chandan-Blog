@@ -4,10 +4,10 @@
 import { doc, setDoc, updateDoc, arrayUnion, arrayRemove, getDoc, writeBatch, collection, query, where, getDocs, limit, orderBy } from "firebase/firestore";
 import { db } from "@/lib/firebase/config";
 import type { UserProfile } from "../types";
-import { writeFile, mkdir } from "fs/promises";
-import { join } from "path";
+import { put, del } from "@vercel/blob";
 import { revalidatePath } from "next/cache";
 import { createNotification } from "./notifications";
+import { BLOB_TOKEN } from "@/lib/blob/config";
 
 export async function updateUserProfile(user: UserProfile, formData: FormData) {
     const displayName = formData.get("displayName") as string;
@@ -32,22 +32,28 @@ export async function updateUserProfile(user: UserProfile, formData: FormData) {
     // Handle image upload
     if (imageFile && imageFile.size > 0) {
       try {
-        const uploadsDir = join(process.cwd(), "public", "uploads", "avatars");
-        await mkdir(uploadsDir, { recursive: true });
+        // Delete old avatar if it exists in Vercel Blob
+        if (photoURL && photoURL.includes('vercel-storage.com')) {
+          try {
+            await del(photoURL, { token: BLOB_TOKEN });
+          } catch (error) {
+            console.warn("Could not delete old avatar from Vercel Blob:", error);
+          }
+        }
         
         const timestamp = Date.now();
         const sanitizedName = imageFile.name.replace(/[^a-zA-Z0-9.-]/g, "_");
-        const filename = `${user.uid}_${timestamp}_${sanitizedName}`;
-        const filepath = join(uploadsDir, filename);
+        const filename = `avatars/${user.uid}/${timestamp}_${sanitizedName}`;
   
-        const bytes = await imageFile.arrayBuffer();
-        const buffer = Buffer.from(bytes);
-        await writeFile(filepath, buffer);
+        const blob = await put(filename, imageFile, {
+          access: 'public',
+          token: BLOB_TOKEN,
+        });
   
-        photoURL = `/uploads/avatars/${filename}`;
+        photoURL = blob.url;
       } catch (error) {
-        console.error("Error saving profile image:", error);
-        throw new Error("Failed to save profile image.");
+        console.error("Error uploading profile image to Vercel Blob:", error);
+        throw new Error("Failed to upload profile image.");
       }
     }
   
