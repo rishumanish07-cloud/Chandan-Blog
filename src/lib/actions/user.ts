@@ -16,6 +16,13 @@ export async function updateUserProfile(user: UserProfile, formData: FormData) {
     const accountTypeValue = formData.get("accountType");
     const accountType = (accountTypeValue === 'private' ? 'private' : 'public') as 'public' | 'private';
   
+    console.log('🔍 Update Profile Debug:', {
+      accountTypeValue,
+      accountType,
+      currentUserAccountType: user.accountType,
+      willUpdate: accountType !== user.accountType
+    });
+  
     if (!user) {
       throw new Error("You must be logged in to update your profile.");
     }
@@ -46,14 +53,17 @@ export async function updateUserProfile(user: UserProfile, formData: FormData) {
   
     // Update Firestore user document
     const userRef = doc(db, "users", user.uid);
-    const updateData: Partial<UserProfile> = {
+    
+    console.log('📝 Updating Firestore with accountType:', accountType);
+    
+    await updateDoc(userRef, {
       displayName,
       photoURL,
       bio,
       accountType
-    };
-
-    await setDoc(userRef, updateData, { merge: true });
+    });
+    
+    console.log('✅ Firestore update completed');
 
     if (accountType && accountType !== user.accountType) {
       const postsQuery = query(collection(db, "posts"), where("authorId", "==", user.uid));
@@ -68,8 +78,9 @@ export async function updateUserProfile(user: UserProfile, formData: FormData) {
     revalidatePath("/profile");
     revalidatePath(`/users/${user.uid}`);
     revalidatePath("/");
+    revalidatePath("/home");
   
-    return { displayName, photoURL, bio };
+    return { displayName, photoURL, bio, accountType };
 }
 
 
@@ -154,30 +165,27 @@ export async function respondToFollowRequest(
 }
 
 export async function searchUsers(searchQuery: string): Promise<UserProfile[]> {
-    if (!searchQuery) {
+    if (!searchQuery || searchQuery.trim().length === 0) {
       return [];
     }
   
     const usersRef = collection(db, "users");
     
-    // Firestore doesn't support case-insensitive searches natively.
-    // This is a common workaround for prefix searching.
-    const q = query(
-      usersRef,
-      where("displayName", ">=", searchQuery),
-      where("displayName", "<=", searchQuery + "\uf8ff"),
-      limit(10)
-    );
-  
-    const querySnapshot = await getDocs(q);
+    // Get all users and filter client-side for better search experience
+    // For production with many users, consider using Algolia or similar
+    const querySnapshot = await getDocs(query(usersRef, limit(100)));
     
-    const users = querySnapshot.docs.map(doc => doc.data() as UserProfile);
+    const allUsers = querySnapshot.docs.map(doc => doc.data() as UserProfile);
     
-    // Additional client-side filtering can be done here if needed, 
-    // but for simplicity, we rely on the Firestore query.
-    // For a more robust search, one might store a lowercased version of displayName.
+    // Client-side filtering for case-insensitive search on displayName and email
+    const searchLower = searchQuery.toLowerCase().trim();
+    const filteredUsers = allUsers.filter(user => {
+      const displayName = (user.displayName || '').toLowerCase();
+      const email = (user.email || '').toLowerCase();
+      return displayName.includes(searchLower) || email.includes(searchLower);
+    });
 
-    return users;
+    return filteredUsers.slice(0, 10);
 }
 
 
