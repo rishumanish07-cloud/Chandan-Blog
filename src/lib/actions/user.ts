@@ -13,7 +13,8 @@ export async function updateUserProfile(user: UserProfile, formData: FormData) {
     const displayName = formData.get("displayName") as string;
     const bio = formData.get("bio") as string;
     const imageFile = formData.get("image") as File;
-    const accountType = formData.get("accountType") as 'public' | 'private';
+    const accountTypeValue = formData.get("accountType");
+    const accountType = (accountTypeValue === 'private' ? 'private' : 'public') as 'public' | 'private';
   
     if (!user) {
       throw new Error("You must be logged in to update your profile.");
