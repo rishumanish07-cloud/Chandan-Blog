@@ -1,11 +1,12 @@
 "use client";
 
-import { createContext, useEffect, useState, ReactNode, Suspense } from "react";
+import { createContext, useEffect, useState, ReactNode, Suspense, useContext } from "react";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { doc, onSnapshot } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase/config";
 import type { UserProfile } from "@/lib/types";
 import { usePathname, useRouter } from "next/navigation";
+import { useAuth } from "@/lib/auth/hooks";
 
 interface AuthContextType {
   user: UserProfile | null;
@@ -49,15 +50,6 @@ function AuthRedirector({ children }: { children: ReactNode }) {
 
     return <>{children}</>;
 }
-
-// Custom hook defined inside the provider file to avoid circular dependencies
-export const useAuth = () => {
-    const context = useContext(AuthContext);
-    if (context === undefined) {
-      throw new Error("useAuth must be used within an AuthProvider");
-    }
-    return context;
-};
   
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<UserProfile | null>(null);
