@@ -1,3 +1,4 @@
+
 "use server";
 
 import { doc, setDoc, updateDoc, arrayUnion, arrayRemove, getDoc, writeBatch, collection, query, where, getDocs, limit, orderBy } from "firebase/firestore";
@@ -53,7 +54,7 @@ export async function updateUserProfile(user: UserProfile, formData: FormData) {
 
     await setDoc(userRef, updateData, { merge: true });
 
-    if (accountType) {
+    if (accountType && accountType !== user.accountType) {
       const postsQuery = query(collection(db, "posts"), where("authorId", "==", user.uid));
       const postsSnapshot = await getDocs(postsQuery);
       const batch = writeBatch(db);
