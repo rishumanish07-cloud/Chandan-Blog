@@ -7,7 +7,7 @@ import type { UserProfile } from "../types";
 import { put, del } from "@vercel/blob";
 import { revalidatePath } from "next/cache";
 import { createNotification } from "./notifications";
-import { BLOB_TOKEN } from "@/lib/blob/config";
+import { getBlobToken } from "@/lib/blob/config";
 
 export async function updateUserProfile(user: UserProfile, formData: FormData) {
     const displayName = formData.get("displayName") as string;
@@ -35,7 +35,7 @@ export async function updateUserProfile(user: UserProfile, formData: FormData) {
         // Delete old avatar if it exists in Vercel Blob
         if (photoURL && photoURL.includes('vercel-storage.com')) {
           try {
-            await del(photoURL, { token: BLOB_TOKEN });
+            await del(photoURL, { token: getBlobToken() });
           } catch (error) {
             console.warn("Could not delete old avatar from Vercel Blob:", error);
           }
@@ -47,7 +47,7 @@ export async function updateUserProfile(user: UserProfile, formData: FormData) {
   
         const blob = await put(filename, imageFile, {
           access: 'public',
-          token: BLOB_TOKEN,
+          token: getBlobToken(),
         });
   
         photoURL = blob.url;

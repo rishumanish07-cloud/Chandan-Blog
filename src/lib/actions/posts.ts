@@ -19,7 +19,7 @@ import type { UserProfile } from "@/lib/types";
 import { redirect } from "next/navigation";
 import { put, del } from "@vercel/blob";
 import { createNotification } from "./notifications";
-import { BLOB_TOKEN } from "@/lib/blob/config";
+import { getBlobToken } from "@/lib/blob/config";
 
 export async function createPost(user: UserProfile, formData: FormData) {
   const title = formData.get("title") as string;
@@ -48,7 +48,7 @@ export async function createPost(user: UserProfile, formData: FormData) {
 
       const blob = await put(filename, imageFile, {
         access: 'public',
-        token: BLOB_TOKEN,
+        token: getBlobToken(),
       });
 
       imageUrl = blob.url;
@@ -100,7 +100,7 @@ export async function updatePost(postId: string, userId: string, formData: FormD
     // Delete old image if it exists
     if (imageUrl && imageUrl.includes('vercel-storage.com')) {
       try {
-        await del(imageUrl, { token: BLOB_TOKEN });
+        await del(imageUrl, { token: getBlobToken() });
       } catch (error) {
         console.warn("Could not delete old image from Vercel Blob:", error);
       }
@@ -114,7 +114,7 @@ export async function updatePost(postId: string, userId: string, formData: FormD
 
       const blob = await put(filename, imageFile, {
         access: 'public',
-        token: BLOB_TOKEN,
+        token: getBlobToken(),
       });
 
       imageUrl = blob.url;
@@ -151,7 +151,7 @@ export async function deletePost(postId: string, userId: string) {
     // Delete associated image file from Vercel Blob
     if (postData.imageUrl && postData.imageUrl.includes('vercel-storage.com')) {
       try {
-        await del(postData.imageUrl, { token: BLOB_TOKEN });
+        await del(postData.imageUrl, { token: getBlobToken() });
       } catch (error) {
         console.warn("Could not delete image from Vercel Blob:", error);
       }
